@@ -1,6 +1,9 @@
 name = "kanji-srs"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
+workers_dev = true
+# 公開前の版を試すためのURLは使わない（外から見える入口を増やさない）
+preview_urls = false
 
 # 画面（GitHub Pages）とローカル確認用
 [vars]
@@ -12,12 +15,12 @@ ALLOWED_ORIGINS = "https://goskey-mode.github.io,http://127.0.0.1:8765"
 [[d1_databases]]
 binding = "DB"
 database_name = "kanji-srs"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "70c1a71c-40cc-4fd7-a7fb-97ec3c0eeaab"
 migrations_dir = "migrations/data"
 
 # 写真用（無料プランは1データベース500MBまでのため分ける）
 [[d1_databases]]
 binding = "PHOTOS"
 database_name = "kanji-srs-photos"
-database_id = "00000000-0000-0000-0000-000000000001"
+database_id = "48cbd283-7513-4d4a-86a4-25c124f050ac"
 migrations_dir = "migrations/photos"
