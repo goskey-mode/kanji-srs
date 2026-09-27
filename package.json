@@ -2,7 +2,12 @@
   "name": "kanji-srs",
   "private": true,
   "scripts": {
-    "test": "node --test test/api.test.js test/server.test.js",
-    "dev": "node test/dev-server.js --seed"
+    "test": "node --test test/worker.test.mjs test/api.test.js test/server.test.js",
+    "dev": "node test/dev-server.mjs --seed",
+    "smoke": "node test/smoke.mjs",
+    "deploy": "wrangler deploy --config worker/wrangler.toml"
+  },
+  "devDependencies": {
+    "wrangler": "^4.141.0"
   }
 }

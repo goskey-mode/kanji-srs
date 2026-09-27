@@ -68,7 +68,7 @@
     results: [],       // {card, result}
     startedAt: 0,
     practice: [],
-    photos: {}         // photoId -> Promise<dataUrl>
+    photos: {}         // 写真URL -> 先読み中の Image
   };
 
   // ───── 送信待ち（端末に保存して、まとめて裏で送る） ─────
@@ -104,28 +104,20 @@
     if (el) el.textContent = syncLabel();
   }
 
-  // ───── 写真の先読み ─────
-  function photo(id) {
-    if (!id) return null;
-    if (!state.photos[id]) {
-      state.photos[id] = KS.call('getPhoto', state.pin, [id]).then(function (r) { return r.dataUrl; });
-      state.photos[id].catch(function () { delete state.photos[id]; });
-    }
-    return state.photos[id];
-  }
+  // ───── 写真の先読み（署名付きURLをブラウザに読ませておく。端末のキャッシュが効く） ─────
   function prefetch(cards) {
-    var ids = [];
-    cards.forEach(function (c) { [c.photo_q, c.photo_a].forEach(function (id) { if (id && ids.indexOf(id) < 0) ids.push(id); }); });
-    // 1枚ずつ順番に（同時に投げすぎない）
-    ids.reduce(function (p, id) { return p.then(function () { return photo(id); }).catch(function () {}); }, Promise.resolve());
+    cards.forEach(function (c) {
+      [c.photo_q_url, c.photo_a_url].forEach(function (url) {
+        if (url && !state.photos[url]) { state.photos[url] = new Image(); state.photos[url].src = url; }
+      });
+    });
   }
-  function photoEl(id) {
+  function photoEl(url) {
     var box = h('div', { class: 'photo-wait', text: '写真をよみこみ中…' });
-    var p = photo(id);
-    if (p) p.then(function (url) {
-      var img = h('img', { class: 'photo', src: url, alt: '問題の写真', onclick: function () { zoom(url); } });
-      box.replaceWith(img);
-    }, function () { box.textContent = '写真をよみこめませんでした'; });
+    var img = h('img', { class: 'photo', src: url, alt: '問題の写真', onclick: function () { zoom(url); } });
+    img.addEventListener('load', function () { if (box.parentNode) box.replaceWith(img); });
+    img.addEventListener('error', function () { box.textContent = '写真をよみこめませんでした'; });
+    if (img.complete && img.naturalWidth) return img;
     return box;
   }
   function zoom(url) {
@@ -142,7 +134,7 @@
 
   function showSetup(msg) {
     var needApi = !KS.validApi(KS.getApi());
-    var apiIn = h('input', { class: 'input', type: 'url', placeholder: 'https://script.google.com/macros/s/…/exec', value: KS.getApi() });
+    var apiIn = h('input', { class: 'input', type: 'url', placeholder: 'https://kanji-srs.…workers.dev/api', value: KS.getApi() });
     var pinIn = h('input', { class: 'input', type: 'password', inputmode: 'numeric', autocomplete: 'off', placeholder: 'PIN' });
     var btn = h('button', { class: 'btn', text: 'はじめる', onclick: function () {
       if (needApi && !KS.setApi(apiIn.value.trim())) { KS.toast('接続先URLの形がちがいます', 'error'); return; }
@@ -248,7 +240,7 @@
       main.push(sentenceEl(c, false));
       main.push(h('div', { class: 'hint', text: c.direction === 'write' ? '紙に書いてから押してね' : 'よみを紙に書いてから押してね' }));
     } else {
-      if (c.photo_q) main.push(photoEl(c.photo_q));
+      if (c.photo_q_url) main.push(photoEl(c.photo_q_url));
       if (c.sentence) main.push(h('div', { class: 'sentence' + (c.sentence.length > 18 ? ' long' : ''), text: c.sentence }));
       var meta = [c.source, c.qno, c.reason ? '理由: ' + c.reason : ''].filter(Boolean).join('・');
       if (meta) main.push(h('div', { class: 'hint', text: meta }));
@@ -276,7 +268,7 @@
         main.push(h('div', { class: 'reading', text: c.answer }));
       }
     } else {
-      if (c.photo_a) main.push(photoEl(c.photo_a));
+      if (c.photo_a_url) main.push(photoEl(c.photo_a_url));
       if (c.answer) main.push(h('div', { class: 'answer' + (c.answer.length > 8 ? ' long' : ''), text: c.answer }));
     }
     if (c.explanation) main.push(h('div', { class: 'explain', text: (c.type === 'C' ? 'ポイント: ' : '') + c.explanation }));

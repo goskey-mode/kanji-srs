@@ -41,11 +41,13 @@ test('promptParts: 書きはカタカナ（または出題表記）、読みは�
 });
 
 test('接続先: #api= で保存し、アドレス欄から消す。形式が違えば保存しない', () => {
-  const url = 'https://script.google.com/macros/s/ABC/exec';
+  const url = 'https://kanji-srs.example-sub.workers.dev/api';
   const a = loadKS('#api=' + encodeURIComponent(url));
   assert.equal(a.KS.getApi(), url);
   assert.equal(a.win.replaced, '/study.html');
-  const b = loadKS('#api=' + encodeURIComponent('https://evil.example/exec'));
+  const b = loadKS('#api=' + encodeURIComponent('https://evil.example/api'));
   assert.equal(b.KS.getApi(), '');
-  assert.equal(b.KS.setApi('https://script.google.com/macros/s/X/edit'), false);
+  assert.equal(b.KS.setApi('https://kanji-srs.x.workers.dev.evil.example/api'), false);
+  assert.equal(b.KS.setApi('http://kanji-srs.x.workers.dev/api'), false); // http は不可（ローカル確認の 127.0.0.1 だけ許す）
+  assert.equal(b.KS.setApi('http://127.0.0.1:8787/api'), true);
 });

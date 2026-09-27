@@ -2,7 +2,6 @@
 (function (global) {
   'use strict';
 
-  var API_PREFIX = 'https://script.google.com/macros/s/';
   var KEY_API = 'kanjisrs_api';
 
   // localStorage は使えない環境（プライベートモード等）もあるので、失敗しても動くようにする
@@ -24,7 +23,9 @@
   }
   function storeJson(key, value) { store(key, JSON.stringify(value)); }
 
-  function validApi(u) { return typeof u === 'string' && u.indexOf(API_PREFIX) === 0 && /\/exec$/.test(u); }
+  // Cloudflare Workers の API（…workers.dev/api）。ローカル確認用に 127.0.0.1 も許す
+  var API_PATTERN = /^(https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.workers\.dev|http:\/\/127\.0\.0\.1:\d+)\/api$/;
+  function validApi(u) { return typeof u === 'string' && API_PATTERN.test(u); }
 
   // 親が送るリンク末尾の #api=... で接続先を設定する（# 以降はサーバに送られない）
   (function readHash() {
@@ -51,14 +52,13 @@
     return MESSAGES[m] || m;
   }
 
-  // GAS の doPost を呼ぶ。端末にログイン中の Google アカウント（子どもアカウント）の Cookie は送らない
+  // API を呼ぶ。Cookie は送らない（PIN だけで認証する）
   function call(fn, pin, args, opts) {
     var api = getApi();
     if (!validApi(api)) return Promise.reject(new Error('接続先URLが未設定です'));
     return fetch(api, {
       method: 'POST',
       credentials: 'omit',
-      redirect: 'follow',
       keepalive: !!(opts && opts.keepalive),
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ fn: fn, pin: pin, args: args || [] })
@@ -68,7 +68,7 @@
     }).then(function (text) {
       var j;
       try { j = JSON.parse(text); } catch (e) {
-        throw new Error('サーバーの応答が読めません（GASを新しいバージョンでデプロイしたか確認）');
+        throw new Error('サーバーの応答が読めません');
       }
       if (!j.ok) throw new Error(j.error);
       return j.result;
@@ -115,9 +115,10 @@
 
   function isKanji(card) { return card.type === 'A' && !!card.reading && !!card.sentence; }
 
-  // 長辺1600pxに縮小してJPEG化（現行ブラウザは描画時にEXIFの向きを反映する。Phase 0 で確認）
+  // 長辺1280pxに縮小してJPEG化（現行ブラウザは描画時にEXIFの向きを反映する。Phase 0 で確認）。
+  // 写真用データベースは500MBまでなので、1枚100〜150KB程度に抑える
   function resizeImage(file, maxSide) {
-    maxSide = maxSide || 1600;
+    maxSide = maxSide || 1280;
     return new Promise(function (resolve, reject) {
       var url = URL.createObjectURL(file);
       var img = new Image();
@@ -129,7 +130,7 @@
         canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(url);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
       };
       img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('画像を読み込めません')); };
       img.src = url;

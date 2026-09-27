@@ -126,7 +126,7 @@
   // ───── 初期設定 ─────
   function showSetup(msg) {
     var needApi = !KS.validApi(KS.getApi());
-    var apiIn = h('input', { class: 'input', type: 'url', placeholder: 'https://script.google.com/macros/s/…/exec', value: KS.getApi() });
+    var apiIn = h('input', { class: 'input', type: 'url', placeholder: 'https://kanji-srs.…workers.dev/api', value: KS.getApi() });
     var pinIn = h('input', { class: 'input', type: 'password', inputmode: 'numeric', autocomplete: 'off', placeholder: '親用PIN' });
     var btn = h('button', { class: 'btn', text: 'ログイン', onclick: function () {
       if (needApi && !KS.setApi(apiIn.value.trim())) { KS.toast('接続先URLの形式が違います', 'error'); return; }
@@ -142,7 +142,7 @@
     app.replaceChildren(h('div', { class: 'setup' }, [
       h('h1', { text: '漢字SRS 管理' }),
       msg ? h('div', { class: 'ng', text: msg }) : null,
-      needApi ? field('接続先（GAS の Web app URL）', apiIn) : null,
+      needApi ? field('接続先（APIのURL）', apiIn) : null,
       field('親用PIN', pinIn),
       btn
     ]));
@@ -467,13 +467,11 @@
     var rsSel = h('select', { class: 'input' }, [h('option', { value: '', text: '（なし）' })].concat(REASONS.map(function (s) { return h('option', { value: s, text: s }); })));
     rsSel.value = i.reason;
     var photos = h('div', { class: 'photos' });
-    [i.photo_q, i.photo_a].filter(Boolean).forEach(function (id) {
-      call('getPhoto', id).then(function (r) {
-        photos.appendChild(h('img', { src: r.dataUrl, alt: '写真', onclick: function () {
-          var ov = h('div', { class: 'overlay', onclick: function () { ov.remove(); } }, [h('img', { src: r.dataUrl, alt: '拡大' })]);
-          document.body.appendChild(ov);
-        } }));
-      }).catch(function () {});
+    [i.photo_q_url, i.photo_a_url].filter(Boolean).forEach(function (url) {
+      photos.appendChild(h('img', { src: url, alt: '写真', onclick: function () {
+        var ov = h('div', { class: 'overlay', onclick: function () { ov.remove(); } }, [h('img', { src: url, alt: '拡大' })]);
+        document.body.appendChild(ov);
+      } }));
     });
     var hist = h('table', { class: 'hist' }, [h('tr', {}, [h('td', { class: 'muted', text: '履歴を読み込み中…' })])]);
     call('itemHistory', i.item_id).then(function (rows) {
@@ -539,9 +537,56 @@
             return h('div', { class: 'item' }, [h('div', { class: 'q', text: s.sentence || [s.source, s.qno].join(' ') }),
               h('div', { class: 'ng', text: '×' + s.lapses }), h('div', { class: 'meta', text: '答え: ' + s.answer })]);
           }))
-          : h('div', { class: 'empty', text: 'ありません' })
+          : h('div', { class: 'empty', text: 'ありません' }),
+        photoMeter(o.photos),
+        exportBox()
       );
     }).catch(fail);
+  }
+
+  // 写真用データベースは無料プランで500MBまで。8割を超えたら知らせる
+  function photoMeter(p) {
+    var mb = function (b) { return (b / 1000 / 1000).toFixed(1); };
+    var pct = Math.min(100, Math.round(p.bytes / p.limit * 100));
+    return h('div', {}, [
+      h('div', { class: 'sec', text: '写真の保存容量（' + p.count + '枚）' }),
+      h('div', { style: 'padding:0 16px' }, [
+        h('div', { style: 'height:10px;background:var(--line);border-radius:5px;overflow:hidden' },
+          [h('i', { style: 'display:block;height:100%;width:' + pct + '%;background:' + (pct >= 80 ? 'var(--ng)' : 'var(--accent)') })]),
+        h('div', { class: pct >= 80 ? 'ng' : 'muted', style: 'font-size:12px;margin-top:4px',
+          text: mb(p.bytes) + 'MB / ' + mb(p.limit) + 'MB' + (pct >= 80 ? '（残りわずか。写真用データベースの追加が必要です）' : '') })
+      ])
+    ]);
+  }
+
+  // CSV 書き出し（Excel で文字化けしないよう BOM 付き UTF-8）
+  var EXPORTS = [['items', '問題'], ['reviews', '解答の記録'], ['cards', 'カード（復習の予定）'], ['days', '日ごとの記録']];
+  function exportBox() {
+    var s = h('select', { class: 'input' }, EXPORTS.map(function (e) { return h('option', { value: e[0], text: e[1] }); }));
+    var btn = h('button', { class: 'btn ghost', text: 'CSVで書き出す', onclick: function () {
+      btn.disabled = true;
+      exportCsv(s.value).catch(fail).then(function () { btn.disabled = false; });
+    } });
+    return h('div', {}, [h('div', { class: 'sec', text: 'データの書き出し' }), h('div', { class: 'form', style: 'flex-direction:row' }, [s, btn])]);
+  }
+  function exportCsv(name) {
+    var rows = [];
+    function page(offset) {
+      return call('exportTable', name, offset).then(function (r) {
+        rows = rows.concat(r.rows);
+        return r.next === null ? rows : page(r.next);
+      });
+    }
+    return page(0).then(function (all) {
+      if (!all.length) { KS.toast('データがありません'); return; }
+      var cols = Object.keys(all[0]);
+      var esc = function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      var csv = '﻿' + [cols.join(',')].concat(all.map(function (r) { return cols.map(function (c) { return esc(r[c]); }).join(','); })).join('\r\n');
+      var a = h('a', { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })), download: 'kanji-srs_' + name + '_' + today() + '.csv' });
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    });
   }
 
   render();
