@@ -274,3 +274,34 @@ test('新しいカードは登録した順・同じ問題は書き→読みの�
   const cards = (await t.api('getToday', S)).cards;
   assert.deepEqual(cards.map((c) => c.answer + ':' + c.direction), ['漢字:write', '音楽:write', '音楽:read', '講義:write']);
 });
+
+test('0問で自動的に終えた日でも、あとから登録した問題はその日のうちに出る', async () => {
+  const t = setup();
+  const morning = await t.api('getToday', S);
+  assert.equal(morning.done, true);
+  assert.equal(morning.streak, 1);
+  await t.api('addItems', A, [kanji('大学の講義を受ける', '講義', 'こうぎ')]);
+  const evening = await t.api('getToday', S);
+  assert.equal(evening.done, false);
+  assert.equal(evening.cards.length, 1);
+  assert.equal(evening.streak, 1); // 連続日数はそのまま
+  // 最後まで解いて終えたら、その日はもう出さない
+  await t.api('submitReviews', S, [rv(evening.cards[0].card_id, 'o', '2026-10-01T20:00:00+09:00')]);
+  await t.api('finishDay', S, { day: '2026-10-01', cards_done: 1, seconds: 20 });
+  await t.api('addItems', A, [kanji('試合に負ける', '負ける', 'まける')]);
+  assert.equal((await t.api('getToday', S)).done, true);
+});
+
+test('削除した問題を解いた時間は今日の予算に数えない', async () => {
+  const t = setup();
+  const list = [];
+  for (let i = 0; i < 30; i++) list.push(kanji('例' + i + 'の漢字', '漢字', 'かんじ'));
+  await t.api('addItems', A, [kanji('確認用の講義', '講義', 'こうぎ')]);
+  const test1 = (await t.api('getToday', S)).cards[0];
+  await t.api('submitReviews', S, [rv(test1.card_id, 'o', '2026-10-01T10:01:00+09:00')]);
+  await t.api('setStatus', A, (await t.api('listItems', A))[0].item_id, 'deleted');
+  await t.api('addItems', A, list);
+  const ids = t.q("SELECT c.card_id FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.status = 'active'").map((r) => r.card_id);
+  ids.forEach((cid) => t.env.DB.raw.prepare("UPDATE cards SET state = 'learning', stage = 1, due = '2026-09-30' WHERE card_id = ?").run(cid));
+  assert.equal((await t.api('getToday', S)).cards.length, 30); // 600秒 ÷ 20秒。削除した1問の20秒は引かれない
+});

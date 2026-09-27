@@ -173,13 +173,16 @@ async function getToday(c) {
   const today = studyDay(c.now, st.day_start_hour);
   const [daysRes, spentRes, introRes, gradRes] = await c.db.batch([
     c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
-    c.db.prepare('SELECT c.direction, i.photo_q FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE r.study_day = ?').bind(today),
+    // 削除・停止した問題（本番の動作確認用など）を解いた時間は、今日の予算に数えない
+    c.db.prepare("SELECT c.direction, i.photo_q FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE r.study_day = ? AND i.status = 'active'").bind(today),
     c.db.prepare('SELECT COUNT(*) AS n FROM cards WHERE introduced_on = ?').bind(today),
     c.db.prepare("SELECT COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.status = 'active' AND c.state IN ('spot', 'retired')")
   ]);
   const dayRows = daysRes.results;
   const todayRow = dayRows.find((r) => r.study_day === today);
-  let done = !!(todayRow && todayRow.completed);
+  // 最後まで解いて終えた日だけ「終わり」にする。出す問題が0問で自動的に終えた日（cards_done = 0）は、
+  // あとから親が問題を登録したら同じ日のうちに出題する
+  let done = !!(todayRow && todayRow.completed && todayRow.cards_done > 0);
   const queue = [];
   const writes = [];
   if (!done) {
@@ -220,8 +223,10 @@ async function getToday(c) {
     }
     // 出す問題が無い日は自動で「終えた日」にする
     if (!queue.length) {
-      writes.push(upsertDaysStmt(c, [{ study_day: today, completed: 1 }], ['completed']));
-      dayRows.push({ study_day: today, completed: 1, freeze_used: 0 });
+      if (!(todayRow && todayRow.completed)) {
+        writes.push(upsertDaysStmt(c, [{ study_day: today, completed: 1 }], ['completed']));
+        dayRows.push({ study_day: today, completed: 1, cards_done: 0, freeze_used: 0 });
+      }
       done = true;
     }
   }
