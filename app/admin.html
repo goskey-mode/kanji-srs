@@ -157,7 +157,12 @@
       jobsActive ? h('span', { class: 'chip', text: '保存中 ' + jobsActive + '件' }) : null]);
     var body = h('div', { class: 'wrap' });
     var nav = h('nav', { class: 'tabs' }, [['add', '登録'], ['list', '一覧'], ['status', '状況']].map(function (t) {
-      return h('button', { class: tab === t[0] ? 'on' : '', text: t[1], onclick: function () { tab = t[0]; render(); } });
+      return h('button', { class: tab === t[0] ? 'on' : '', text: t[1], onclick: function () {
+        tab = t[0];
+        // 子どもが別の端末で解いた結果を反映するため、一覧は開くたびに読み直す
+        if (tab === 'list') items = null;
+        render();
+      } });
     }));
     app.replaceChildren(head, body, nav);
     if (tab === 'add') renderAdd(body);
