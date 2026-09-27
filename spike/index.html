@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<!-- GAS 上では無視され addMetaTag が効く。GitHub Pages 上ではこちらが効く -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漢字SRS 技術検証</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6b66;
+    --line: #dcdcd6; --accent: #2f6fdb; --ok: #1f8a4c; --ng: #c23b3b; --warn: #b7791f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a19; --panel: #242423; --text: #ececea; --muted: #a0a09a;
+      --line: #3a3a38; --accent: #6b9cf0; --ok: #4cc27f; --ng: #ef6b6b; --warn: #e0a84a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px; background: var(--bg); color: var(--text);
+    font: 16px/1.6 -apple-system, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  section {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px; margin-bottom: 12px;
+  }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  p.note { color: var(--muted); font-size: 14px; margin: 4px 0 8px; }
+  button, .filebtn {
+    display: inline-block; min-height: 48px; padding: 10px 18px; margin: 4px 6px 4px 0;
+    border: 0; border-radius: 8px; background: var(--accent); color: #fff;
+    font-size: 16px; cursor: pointer;
+  }
+  button:disabled { opacity: .5; }
+  input[type=password], input[type=text] {
+    min-height: 48px; font-size: 20px; padding: 6px 10px; width: 12em; max-width: 100%;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text);
+  }
+  input[type=file] { display: none; }
+  .res { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; white-space: pre-wrap; word-break: break-all; }
+  .ok { color: var(--ok); } .ng { color: var(--ng); } .warn { color: var(--warn); }
+  img#photo { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; margin-top: 8px; display: none; }
+  textarea { width: 100%; min-height: 200px; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace;
+    background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+  label.chk { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>漢字SRS 技術検証（Phase 0）</h1>
+
+  <section id="apiBox" hidden>
+    <h2>接続先</h2>
+    <input type="text" id="api" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%">
+    <button id="saveApi">保存</button>
+    <p class="note">GAS の Web app URL。親が最初に1回だけ設定します（この端末に保存）。</p>
+  </section>
+
+  <section>
+    <h2>PIN</h2>
+    <input type="password" id="pin" inputmode="numeric" autocomplete="off" placeholder="PIN">
+    <label class="chk"><input type="checkbox" id="remember"> この端末で覚える</label>
+    <p class="note">setup() で設定した6桁以上の数字。</p>
+  </section>
+
+  <section>
+    <h2>T1〜T3 通信とデータ</h2>
+    <button id="runAll">T1〜T3 をまとめて実行</button>
+    <div class="res" id="out"></div>
+  </section>
+
+  <section>
+    <h2>T4 写真</h2>
+    <p class="note">タブレットでは「写真を撮る」でカメラが起動するか、撮った写真が<strong>横倒しにならずに</strong>表示されるかも確認してください。</p>
+    <label class="filebtn" for="cam">写真を撮る</label>
+    <label class="filebtn" for="lib">写真を選ぶ</label>
+    <input type="file" id="cam" accept="image/*" capture="environment">
+    <input type="file" id="lib" accept="image/*">
+    <div class="res" id="photoOut"></div>
+    <img id="photo" alt="Driveから読み戻した写真">
+  </section>
+
+  <section>
+    <h2>結果</h2>
+    <p class="note">下の結果をコピーして、Claude に貼り付けてください。</p>
+    <button id="copy">結果をコピー</button>
+    <textarea id="report" readonly></textarea>
+  </section>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var lines = [];
+
+  function log(el, text, cls) {
+    var div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = text;
+    el.appendChild(div);
+    lines.push(text);
+    renderReport();
+  }
+
+  function envInfo() {
+    var ls = 'NG';
+    try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); ls = 'OK'; } catch (e) { /* 使えない環境 */ }
+    return [
+      'host: ' + location.hostname + ' / transport: ' + (onGas ? 'google.script.run' : 'fetch'),
+      'UA: ' + navigator.userAgent,
+      'screen: ' + screen.width + 'x' + screen.height + ' / viewport: ' + innerWidth + 'x' + innerHeight + ' / dpr: ' + devicePixelRatio,
+      'touch: ' + (navigator.maxTouchPoints || 0) + ' / localStorage: ' + ls,
+      'dark: ' + (matchMedia('(prefers-color-scheme: dark)').matches ? 'yes' : 'no')
+    ];
+  }
+
+  function renderReport() {
+    $('report').value = ['[T5 端末情報]'].concat(envInfo(), [''], lines).join('\n');
+  }
+
+  function pin() { return $('pin').value.trim(); }
+
+  // GAS 上で開いたときは google.script.run、GitHub Pages 等で開いたときは fetch で GAS の doPost を呼ぶ
+  var onGas = !!(window.google && google.script && google.script.run);
+  var API_PREFIX = 'https://script.google.com/macros/s/';
+  var apiUrl = '';
+
+  function validApi(u) { return typeof u === 'string' && u.indexOf(API_PREFIX) === 0 && /\/exec$/.test(u); }
+  function setApi(u) {
+    apiUrl = u;
+    $('api').value = u;
+    try { localStorage.setItem('kanjisrs_api', u); } catch (e) { /* 使えない環境ではこの読み込み中だけ保持 */ }
+  }
+
+  if (!onGas) {
+    $('apiBox').hidden = false;
+    try { apiUrl = localStorage.getItem('kanjisrs_api') || ''; } catch (e) { /* 使えない環境 */ }
+    // 親が送るリンク末尾の #api=... で設定できる（# 以降はサーバに送られない）
+    var m = /[#&]api=([^&]+)/.exec(location.hash);
+    if (m && validApi(decodeURIComponent(m[1]))) {
+      setApi(decodeURIComponent(m[1]));
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+    $('api').value = apiUrl;
+    $('saveApi').addEventListener('click', function () {
+      var u = $('api').value.trim();
+      if (validApi(u)) { setApi(u); this.textContent = '保存しました'; }
+      else { this.textContent = 'URLの形式が違います'; }
+    });
+  }
+
+  function call(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    if (onGas) {
+      return new Promise(function (resolve, reject) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r[fn].apply(r, args);
+      });
+    }
+    if (!validApi(apiUrl)) return Promise.reject(new Error('接続先URLが未設定です'));
+    return fetch(apiUrl, {
+      method: 'POST',
+      // 端末にログイン中の Google アカウント（子どもアカウント）の Cookie を送らない
+      credentials: 'omit',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, pin: args[0], args: args.slice(1) })
+    }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    }).then(function (text) {
+      var j;
+      try { j = JSON.parse(text); } catch (e) {
+        throw new Error('GASの応答がJSONではありません（新しいバージョンでデプロイし直したか確認）: ' + text.slice(0, 80));
+      }
+      if (!j.ok) throw new Error(j.error);
+      return j.result;
+    });
+  }
+
+  function verdict(ms, target) { return ms <= target ? 'ok' : (ms <= target * 2 ? 'warn' : 'ng'); }
+  function mark(cls) { return cls === 'ok' ? '[合格]' : (cls === 'warn' ? '[注意]' : '[不合格]'); }
+
+  // PIN の記憶（端末ごとの利便性のみ）
+  try {
+    var saved = localStorage.getItem('kanjisrs_pin');
+    if (saved) { $('pin').value = saved; $('remember').checked = true; }
+  } catch (e) { /* 使えない環境 */ }
+  function rememberPin() {
+    try {
+      if ($('remember').checked) localStorage.setItem('kanjisrs_pin', pin());
+      else localStorage.removeItem('kanjisrs_pin');
+    } catch (e) { /* 使えない環境 */ }
+  }
+
+  $('runAll').addEventListener('click', async function () {
+    var out = $('out');
+    out.textContent = '';
+    this.disabled = true;
+    rememberPin();
+    try {
+      // T1: 往復5回
+      var times = [];
+      for (var i = 0; i < 5; i++) {
+        var t0 = performance.now();
+        await call('apiPing', pin());
+        times.push(Math.round(performance.now() - t0));
+      }
+      var avg = Math.round(times.reduce(function (a, b) { return a + b; }, 0) / times.length);
+      var c1 = verdict(avg, 1500);
+      log(out, mark(c1) + ' T1 往復 平均 ' + avg + 'ms（各回 ' + times.join(', ') + 'ms / 目標 1500ms以下）', c1);
+
+      // T2: 書き込み→読み戻し
+      var stamp = 'spike ' + new Date().toISOString();
+      var t2 = performance.now();
+      var r2 = await call('apiWriteRead', pin(), stamp);
+      var ms2 = Math.round(performance.now() - t2);
+      var match = r2.readBack === stamp;
+      var c2 = match ? verdict(ms2, 2500) : 'ng';
+      log(out, mark(c2) + ' T2 書き込み→読み戻し ' + ms2 + 'ms（サーバ内 ' + r2.serverMs + 'ms / 一致: ' + (match ? 'はい' : 'いいえ') + ' / 目標 2500ms以下）', c2);
+
+      // T3: 300件の一括読み込み
+      await call('apiSeedBulk', pin(), 300);
+      var t3 = performance.now();
+      var r3 = await call('apiLoadBulk', pin());
+      var ms3 = Math.round(performance.now() - t3);
+      var kb = Math.round(JSON.stringify(r3.rows).length / 1024);
+      var c3 = r3.rows.length === 300 ? verdict(ms3, 3000) : 'ng';
+      log(out, mark(c3) + ' T3 300件読み込み ' + ms3 + 'ms（サーバ内 ' + r3.serverMs + 'ms / ' + r3.rows.length + '件 / 約' + kb + 'KB / 目標 3000ms以下）', c3);
+    } catch (e) {
+      log(out, '[エラー] ' + (e && e.message ? e.message : e), 'ng');
+    }
+    this.disabled = false;
+  });
+
+  function loadImage(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('画像を読み込めません')); };
+      img.src = url;
+    });
+  }
+
+  // 長辺1600pxに縮小してJPEG化（現行ブラウザは描画時にEXIFの向きを反映する）
+  async function resizeToDataUrl(file) {
+    var img = await loadImage(file);
+    var maxSide = 1600;
+    var scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    var w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(img.src);
+    return { dataUrl: canvas.toDataURL('image/jpeg', 0.8), w: w, h: h };
+  }
+
+  async function onPhoto(e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    var out = $('photoOut');
+    out.textContent = '';
+    $('photo').style.display = 'none';
+    rememberPin();
+    try {
+      var t0 = performance.now();
+      var r = await resizeToDataUrl(file);
+      var msResize = Math.round(performance.now() - t0);
+      log(out, 'T4a 縮小 ' + msResize + 'ms（元 ' + Math.round(file.size / 1024) + 'KB → ' + r.w + 'x' + r.h + '）');
+
+      var t1 = performance.now();
+      var up = await call('apiUploadPhoto', pin(), r.dataUrl);
+      var msUp = Math.round(performance.now() - t1);
+      var cUp = verdict(msUp, 5000);
+      log(out, mark(cUp) + ' T4b 保存 ' + msUp + 'ms（サーバ内 ' + up.serverMs + 'ms / ' + Math.round(up.bytes / 1024) + 'KB / 目標 5000ms以下）', cUp);
+
+      var t2 = performance.now();
+      var got = await call('apiGetPhoto', pin(), up.id);
+      var msGet = Math.round(performance.now() - t2);
+      var cGet = verdict(msGet, 3000);
+      log(out, mark(cGet) + ' T4c 読み戻し ' + msGet + 'ms（サーバ内 ' + got.serverMs + 'ms / 目標 3000ms以下）', cGet);
+
+      $('photo').src = got.dataUrl;
+      $('photo').style.display = 'block';
+      log(out, 'T4d 写真の向き → 目視で確認して、横倒しなら Claude に伝えてください');
+    } catch (err) {
+      log(out, '[エラー] T4 ' + (err && err.message ? err.message : err), 'ng');
+    }
+  }
+  $('cam').addEventListener('change', onPhoto);
+  $('lib').addEventListener('change', onPhoto);
+
+  $('copy').addEventListener('click', function () {
+    var ta = $('report');
+    var text = ta.value;
+    function fallback() {
+      ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { /* 失敗時は手動コピー */ }
+      $('copy').textContent = ok ? 'コピーしました' : '選択しました。手動でコピーしてください';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { $('copy').textContent = 'コピーしました'; }, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  renderReport();
+})();
+</script>
+</body>
+</html>
