@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漢字SRS</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="setup">
+  <h1>漢字SRS</h1>
+  <a class="btn" id="study" href="study.html" style="text-align:center;text-decoration:none;line-height:28px">かんじれんしゅう（タブレット）</a>
+  <a class="btn ghost" id="admin" href="admin.html" style="text-align:center;text-decoration:none;line-height:28px">管理（親）</a>
+</div>
+<script>
+  // #api=... 付きで開かれたときは、そのまま引き継ぐ
+  if (location.hash) {
+    document.getElementById('study').href += location.hash;
+    document.getElementById('admin').href += location.hash;
+  }
+</script>
+</body>
+</html>

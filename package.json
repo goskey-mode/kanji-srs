@@ -1,0 +1,8 @@
+{
+  "name": "kanji-srs",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/api.test.js test/server.test.js",
+    "dev": "node test/dev-server.js --seed"
+  }
+}
