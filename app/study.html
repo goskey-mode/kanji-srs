@@ -39,6 +39,9 @@
   .g-t { color: var(--mid); border-color: var(--mid); }
   .g-x { color: var(--ng); border-color: var(--ng); }
   .score { font-size: 20px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { min-width: 88px; min-height: 44px; border: 0; background: var(--panel); color: var(--muted); font-size: 16px; }
+  .seg button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; }
   @media (max-height: 480px) {
     .big { min-height: 52px; font-size: 19px; }
     .grade { min-height: 60px; }
@@ -59,6 +62,8 @@
   var KEY_OUTBOX = 'kanjisrs_outbox';
   var KEY_FINISH = 'kanjisrs_pending_finish';
   var BLANK = '（　　）'; // 穴埋め問題の空欄
+  var KEY_DIR = 'kanjisrs_challenge_dir';
+  var DIRS = [['write', '書き'], ['read', '読み'], ['mix', 'まぜる']];
 
   var state = {
     pin: KS.load(KEY_PIN) || '',
@@ -245,8 +250,15 @@
         main.push(h('div', { class: 'hint', text: 'いまチャレンジできる問題はありません' }));
       } else {
         main.push(h('div', { class: 'hint', text: 'できた問題はおぼえたことに、まちがえた問題は復習に入ります' }));
+        // 書きだけ・読みだけ・まぜる（前回の選択を覚えておく）。漢字以外の問題はどれでも出る
+        var dir = KS.load(KEY_DIR) || 'mix';
+        var count = function (d) { return dir === 'write' ? d.write + d.single : dir === 'read' ? d.read + d.single : d.n; };
+        main.push(h('div', { class: 'seg' }, DIRS.map(function (x) {
+          return h('button', { class: x[0] === dir ? 'on' : '', text: x[1], onclick: function () { KS.store(KEY_DIR, x[0]); showDecks(); } });
+        })));
         decks.forEach(function (d) {
-          main.push(h('button', { class: 'btn big', onclick: function () { beginChallenge(d.deck); } }, [d.deck + '（のこり ' + d.n + '問）']));
+          var n = count(d);
+          main.push(h('button', { class: 'btn big', disabled: !n, onclick: function () { beginChallenge(d.deck); } }, [d.deck + '（のこり ' + n + '問）']));
         });
       }
       main.push(h('button', { class: 'btn ghost', text: 'もどる', onclick: start }));
@@ -257,7 +269,7 @@
   function beginChallenge(deck) {
     state.deck = deck;
     showLoading();
-    KS.call('getChallenge', state.pin, [deck, 10]).then(function (cards) {
+    KS.call('getChallenge', state.pin, [deck, 10, KS.load(KEY_DIR) || 'mix']).then(function (cards) {
       if (!cards.length) { showDecks(); return; }
       prefetch(cards);
       beginSession(cards, 'new');

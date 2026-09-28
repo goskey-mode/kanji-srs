@@ -15,7 +15,7 @@ const ITEM_COLS = ['item_id', ...ITEM_FIELDS, 'registered_pool', 'created_at', '
 const CARD_COLS = ['card_id', 'item_id', 'direction', 'stage', 'due', 'state', 'reps', 'lapses', 'last_result', 'last_reviewed_at', 'introduced_on'];
 const REVIEW_COLS = ['review_id', 'card_id', 'answered_at', 'study_day', 'result', 'duration_sec', 'stage_before', 'stage_after', 'mode'];
 // 出題に使う問題の列（カードと結合するときの名前の衝突を避けて明示する）
-const ITEM_VIEW = ITEM_FIELDS.map((k) => 'i.' + k).join(', ');
+const ITEM_VIEW = ['item_id', ...ITEM_FIELDS].map((k) => 'i.' + k).join(', ');
 
 export default {
   async fetch(request, env) {
@@ -180,7 +180,7 @@ async function getToday(c) {
     c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
     // 削除・停止した問題（本番の動作確認用など）を解いた時間は、今日の予算に数えない
     // 新しい問題のチャレンジで解いた時間も数えない（間違えた問題の復習の量が減らないように）
-    c.db.prepare("SELECT c.direction, i.photo_q FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE r.study_day = ? AND i.status = 'active' AND r.mode = 'daily'").bind(today),
+    c.db.prepare("SELECT c.direction, i.photo_q, i.item_id FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE r.study_day = ? AND i.status = 'active' AND r.mode = 'daily'").bind(today),
     // 今日出し始めた新しいカードの数。削除・停止した問題と、チャレンジで間違えて入ってきたカードは数えない
     c.db.prepare(`SELECT COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id
       WHERE c.introduced_on = ? AND i.status = 'active'
@@ -196,6 +196,7 @@ async function getToday(c) {
   const queue = [];
   const writes = [];
   const allowance = Math.max(0, st.new_per_day - introRes.results[0].n);
+  const usedItems = new Set(spentRes.results.map((r) => r.item_id));
   const dueStmt = c.db.prepare(
     `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
      WHERE i.status = 'active' AND c.state IN ('learning', 'spot') AND c.due <> '' AND c.due <= ?
@@ -203,7 +204,7 @@ async function getToday(c) {
        CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT 500`).bind(today);
   const freshStmt = c.db.prepare(
     `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
-     WHERE i.status = 'active' AND i.pool = 'mistake' AND c.state = 'new'
+     WHERE i.status = 'active' AND i.registered_pool = 'mistake' AND c.state = 'new'
      ORDER BY CASE WHEN i.origin IN ('塾', '模試') THEN 0 ELSE 1 END, i.created_at, i.item_id,
        CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT ?`).bind(allowance);
   if (!done) {
@@ -212,19 +213,22 @@ async function getToday(c) {
     let budget = st.daily_seconds - spent;
     const due = await dueStmt.all();
     for (const r of due.results) {
+      if (usedItems.has(r.item_id)) continue;
       const k = cost(r.direction, !!r.photo_q, st);
       // その日まだ1問も解いていなければ、予算を超える1問目でも出す
-      if (k <= budget || (spent === 0 && queue.length === 0)) { queue.push(r); budget -= k; }
+      if (k <= budget || (spent === 0 && queue.length === 0)) { queue.push(r); usedItems.add(r.item_id); budget -= k; }
     }
     if (allowance > 0) {
       const fresh = await freshStmt.all();
       const introduced = [];
       for (const r of fresh.results) {
+        if (usedItems.has(r.item_id)) continue;
         const k = cost(r.direction, !!r.photo_q, st);
         if (k > budget && !(spent === 0 && queue.length === 0)) break;
         r.state = 'learning';
         r.stage = 0;
         queue.push(r);
+        usedItems.add(r.item_id);
         introduced.push(r.card_id);
         budget -= k;
       }
@@ -251,13 +255,19 @@ async function getToday(c) {
       c.db.prepare(`SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM reviews r
         JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id
         WHERE r.study_day = ? AND i.status = 'active' AND r.mode = 'daily' GROUP BY c.card_id ORDER BY MIN(r.answered_at)`).bind(today)]);
-    extra = dueAll.results.concat(freshAll.results);
+    extra = dueAll.results.concat(freshAll.results).filter((r) => {
+      if (usedItems.has(r.item_id)) return false;
+      usedItems.add(r.item_id);
+      return true;
+    });
     practice = practiced.results;
   }
   const s = streak(dayRows, today, st);
   if (s.newFreezes.length) writes.push(upsertDaysStmt(c, s.newFreezes.map((d) => ({ study_day: d, freeze_used: 1 })), ['freeze_used']));
   if (writes.length) await c.db.batch(writes);
   const view = async (list) => { const out = []; for (const r of list) out.push(await withPhotoUrls(c, r)); return out; };
+  shuffle(queue);
+  shuffle(extra);
   let est = 0;
   for (const r of queue) est += cost(r.direction, !!r.photo_q, st);
   let extraEst = 0;
@@ -378,7 +388,7 @@ async function addItems(c, role, list) {
     // 同じ登録操作の中でも登録順に出題されるよう、1件ごとに1ミリ秒ずらす
     const it = { ...n.item, item_id: id('i'), registered_pool: n.item.pool, created_at: new Date(c.now + newItems.length).toISOString(), status: 'active' };
     newItems.push(it);
-    const dirs = n.kanji ? (x.make_read ? ['write', 'read'] : ['write']) : ['single'];
+    const dirs = n.kanji ? (x.make_read || it.pool === 'new' ? ['write', 'read'] : ['write']) : ['single'];
     for (const d of dirs) {
       newCards.push({ card_id: id('c'), item_id: it.item_id, direction: d, stage: 0, due: '', state: 'new', reps: 0, lapses: 0,
         last_result: '', last_reviewed_at: '', introduced_on: '' });
@@ -469,8 +479,8 @@ async function getOverview(c) {
   const [daysRes, countsRes, dueRes, strugRes] = await c.db.batch([
     c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
     c.db.prepare(`SELECT COUNT(DISTINCT i.item_id) AS items, COUNT(c.card_id) AS cards,
-        SUM(c.state IN ('spot', 'retired')) AS graduated, SUM(c.state = 'new' AND i.pool = 'mistake') AS fresh,
-        SUM(c.state = 'new' AND i.pool = 'new') AS challenge, SUM(c.state = 'known') AS known
+        SUM(c.state IN ('spot', 'retired')) AS graduated, SUM(c.state = 'new' AND i.registered_pool = 'mistake') AS fresh,
+        SUM(c.state = 'new' AND i.registered_pool = 'new') AS challenge, SUM(c.state = 'known') AS known
       FROM items i LEFT JOIN cards c ON c.item_id = i.item_id WHERE i.status = 'active'`),
     c.db.prepare(`SELECT CASE WHEN c.due < ?1 THEN ?1 ELSE c.due END AS day, COUNT(*) AS n
       FROM cards c JOIN items i ON i.item_id = c.item_id
@@ -588,21 +598,39 @@ async function resetDay(c, role, day) {
 // ───────── 新しい問題のチャレンジ ─────────
 // 登録先が「新しい問題」で、まだ解いていないカードを種類（単元）ごとに出す。10分の枠や連続日数とは別
 
+const DECK = "COALESCE(NULLIF(i.unit, ''), i.subject, 'その他')";
+
 async function getChallengeDecks(c) {
   const { results } = await c.db.prepare(
-    `SELECT COALESCE(NULLIF(i.unit, ''), i.subject, 'その他') AS deck, COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id
-     WHERE i.status = 'active' AND i.pool = 'new' AND c.state = 'new' GROUP BY 1 ORDER BY MIN(i.created_at)`).all();
+    `SELECT ${DECK} AS deck, COUNT(*) AS n, SUM(c.direction = 'write') AS write, SUM(c.direction = 'read') AS read, SUM(c.direction = 'single') AS single
+     FROM cards c JOIN items i ON i.item_id = c.item_id
+     WHERE i.status = 'active' AND i.registered_pool = 'new' AND c.state = 'new' GROUP BY 1 ORDER BY MIN(i.created_at)`).all();
   return results;
 }
 
-async function getChallenge(c, role, deck, limit) {
+// dir: 'write'（書きだけ）/ 'read'（読みだけ）/ 'mix'（まぜる）。漢字以外の問題（single）はどれでも出す
+async function getChallenge(c, role, deck, limit, dir) {
   const n = Math.max(1, Math.min(50, Math.floor(Number(limit) || 10)));
+  dir = ['write', 'read'].includes(dir) ? dir : 'mix';
   const { results } = await c.db.prepare(
     `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
-     WHERE i.status = 'active' AND i.pool = 'new' AND c.state = 'new' AND COALESCE(NULLIF(i.unit, ''), i.subject, 'その他') = ?
-     ORDER BY i.created_at, i.item_id, CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT ?`).bind(String(deck || ''), n).all();
+     WHERE i.status = 'active' AND i.registered_pool = 'new' AND c.state = 'new' AND ${DECK} = ?1
+       AND (?2 = 'mix' OR c.direction = 'single' OR c.direction = ?2)
+     ORDER BY i.created_at, i.item_id, c.direction DESC LIMIT ?3`).bind(String(deck || ''), dir, n * 2 + 2).all();
+  // 同じ語は1回に1枚だけ（読みの問題には書きの答えがそのまま出るため）。まぜるときは語ごとに書き・読みをランダムに選ぶ
+  const byItem = new Map();
+  for (const r of results) (byItem.get(r.item_id) || byItem.set(r.item_id, []).get(r.item_id)).push(r);
   const out = [];
-  for (const r of results) out.push(await withPhotoUrls(c, r));
+  for (const cards of byItem.values()) {
+    if (out.length >= n) break;
+    out.push(await withPhotoUrls(c, cards[cards.length > 1 ? randomInt(cards.length) : 0]));
+  }
   return out;
 }
 
+function randomInt(n) { return crypto.getRandomValues(new Uint32Array(1))[0] % n; }
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = randomInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
