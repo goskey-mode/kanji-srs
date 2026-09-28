@@ -175,7 +175,8 @@ async function getToday(c) {
     c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
     // 削除・停止した問題（本番の動作確認用など）を解いた時間は、今日の予算に数えない
     c.db.prepare("SELECT c.direction, i.photo_q FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE r.study_day = ? AND i.status = 'active'").bind(today),
-    c.db.prepare('SELECT COUNT(*) AS n FROM cards WHERE introduced_on = ?').bind(today),
+    // 今日出し始めた新しいカードの数。削除・停止した問題の分は数えない
+    c.db.prepare("SELECT COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id WHERE c.introduced_on = ? AND i.status = 'active'").bind(today),
     c.db.prepare("SELECT COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.status = 'active' AND c.state IN ('spot', 'retired')")
   ]);
   const dayRows = daysRes.results;

@@ -305,3 +305,12 @@ test('削除した問題を解いた時間は今日の予算に数えない', as
   ids.forEach((cid) => t.env.DB.raw.prepare("UPDATE cards SET state = 'learning', stage = 1, due = '2026-09-30' WHERE card_id = ?").run(cid));
   assert.equal((await t.api('getToday', S)).cards.length, 30); // 600秒 ÷ 20秒。削除した1問の20秒は引かれない
 });
+
+test('削除した問題のカードは「今日の新しいカード4枚」に数えない', async () => {
+  const t = setup();
+  await t.api('addItems', A, [kanji('確認用の一', '一', 'いち'), kanji('確認用の二', '二', 'に'), kanji('確認用の三', '三', 'さん')]);
+  assert.equal((await t.api('getToday', S)).cards.length, 3);
+  for (const i of await t.api('listItems', A)) await t.api('setStatus', A, i.item_id, 'deleted');
+  await t.api('addItems', A, [kanji('例一の漢字', '漢字', 'かんじ'), kanji('例二の音楽', '音楽', 'おんがく'), kanji('例三の講義', '講義', 'こうぎ'), kanji('例四の貿易', '貿易', 'ぼうえき')]);
+  assert.equal((await t.api('getToday', S)).cards.length, 4);
+});
