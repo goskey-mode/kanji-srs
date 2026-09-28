@@ -257,7 +257,6 @@ test('getOverview と exportTable', async () => {
   const o = await t.api('getOverview', A);
   assert.equal(o.forecast[0].count, 1);
   assert.equal(o.forecast[2].count, 1);
-  assert.equal(o.struggling.length, 1);
   assert.equal(o.items, 2);
   assert.equal(o.photos.count, 0);
   assert.ok(o.photos.bytes > 0);

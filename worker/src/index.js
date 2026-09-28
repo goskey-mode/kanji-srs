@@ -522,7 +522,7 @@ async function getOverview(c) {
   const st = await settings(c);
   const today = studyDay(c.now, st.day_start_hour);
   const last = addDays(today, 6);
-  const [daysRes, countsRes, dueRes, strugRes] = await c.db.batch([
+  const [daysRes, countsRes, dueRes] = await c.db.batch([
     c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
     c.db.prepare(`SELECT COUNT(DISTINCT i.item_id) AS items, COUNT(c.card_id) AS cards,
         SUM(c.state IN ('spot', 'retired')) AS graduated, SUM(c.state = 'new' AND i.registered_pool = 'mistake') AS fresh,
@@ -530,10 +530,7 @@ async function getOverview(c) {
       FROM items i LEFT JOIN cards c ON c.item_id = i.item_id WHERE i.status = 'active'`),
     c.db.prepare(`SELECT CASE WHEN c.due < ?1 THEN ?1 ELSE c.due END AS day, COUNT(*) AS n
       FROM cards c JOIN items i ON i.item_id = c.item_id
-      WHERE i.status = 'active' AND c.state IN ('learning', 'spot') AND c.due <> '' AND c.due <= ?2 GROUP BY 1`).bind(today, last),
-    c.db.prepare(`SELECT i.item_id, MAX(c.lapses) AS lapses, i.answer, i.sentence, i.source, i.qno
-      FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.status = 'active'
-      GROUP BY i.item_id HAVING MAX(c.lapses) >= 3 ORDER BY lapses DESC LIMIT 10`)
+      WHERE i.status = 'active' AND c.state IN ('learning', 'spot') AND c.due <> '' AND c.due <= ?2 GROUP BY 1`).bind(today, last)
   ]);
   const s = streak(daysRes.results, today, st);
   const todayRow = daysRes.results.find((r) => r.study_day === today) || {};
@@ -547,7 +544,7 @@ async function getOverview(c) {
     todayDone: !!todayRow.completed, todayCards: todayRow.cards_done || 0, todaySeconds: todayRow.seconds || 0,
     items: cnt.items || 0, cards: cnt.cards || 0, graduated: cnt.graduated || 0, fresh: cnt.fresh || 0,
     challenge: cnt.challenge || 0, known: cnt.known || 0,
-    forecast, struggling: strugRes.results,
+    forecast,
     photos: { count: photoRes.results[0].n, bytes: (photoRes.meta && photoRes.meta.size_after) || 0, limit: 500 * 1000 * 1000 }
   };
 }
@@ -793,16 +790,15 @@ async function getChallenge(c, role, deck, limit, dir) {
   const st = await settings(c);
   const since = addDays(studyDay(c.now, st.day_start_hour), -(RECENT_DAYS - 1));
   const { results } = await c.db.prepare(
-    `WITH wc AS (${KANJI_WORDS}),
-       recent AS (SELECT DISTINCT k.item_id FROM reviews r JOIN cards k ON k.card_id = r.card_id WHERE r.study_day >= ?4),
-       recent_char AS (SELECT DISTINCT wc.char FROM wc JOIN recent ON recent.item_id = wc.item_id)
-     SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW},
-       (SELECT wc.char FROM wc WHERE wc.item_id = i.item_id LIMIT 1) AS kchar
+    `WITH recent AS (SELECT DISTINCT k.item_id FROM reviews r JOIN cards k ON k.card_id = r.card_id WHERE r.study_day >= ?4),
+       recent_char AS (SELECT kk.char FROM recent JOIN kanji_kun kk ON kk.item_id = recent.item_id
+         UNION SELECT kj.char FROM recent JOIN kanji kj ON kj.item_id = recent.item_id)
+     SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW}, COALESCE(kk.char, kj.char) AS kchar
      FROM cards c JOIN items i ON i.item_id = c.item_id
+       LEFT JOIN kanji_kun kk ON kk.item_id = i.item_id LEFT JOIN kanji kj ON kj.item_id = i.item_id
      WHERE i.status = 'active' AND i.registered_pool = 'new' AND c.state = 'new' AND ${DECK} = ?1
        AND (?2 = 'mix' OR c.direction = 'single' OR c.direction = ?2)
-     ORDER BY (i.item_id IN (SELECT item_id FROM recent)
-         OR EXISTS (SELECT 1 FROM wc JOIN recent_char rc ON rc.char = wc.char WHERE wc.item_id = i.item_id)),
+     ORDER BY (i.item_id IN (SELECT item_id FROM recent) OR COALESCE(kk.char, kj.char) IN (SELECT char FROM recent_char)),
        RANDOM() LIMIT ?3`).bind(String(deck || ''), dir, n * 4 + 4, since).all();
   // 同じ語は1回に1枚だけ（読みの問題には書きの答えがそのまま出るため）。まぜるときは語ごとに書き・読みをランダムに選ぶ
   const byItem = new Map();
