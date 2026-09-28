@@ -101,7 +101,7 @@
   var units = null;       // listUnits のキャッシュ（一覧の絞り込み用）
   var keys = null;        // listKeys のキャッシュ（登録前の重複チェック用）
   var jobs = [];          // 写真登録の裏の処理 {label, status}
-  var filters = { pool: 'mistake', unit: '', subject: '', state: '', reason: '', q: '' };
+  var filters = { pool: 'mistake', unit: '', subject: '', state: '', reason: '', photo: '', q: '' };
 
   function saveMeta() { KS.storeJson(KEY_META, meta); }
   function call(fn) { return KS.call(fn, pin, Array.prototype.slice.call(arguments, 1)); }
@@ -490,6 +490,7 @@
     if (i.photo_q && !i.sentence) return ['（写真）' + [i.source, i.qno].filter(Boolean).join(' ')];
     return [i.sentence];
   }
+  function hasPhoto(i) { return !!(i.photo_q || i.photo_a); }
   function dots(list) {
     return h('div', { class: 'dots' }, list.map(function (r) {
       return h('span', { class: r === '○' ? 'ok' : r === '△' ? 'mid' : 'ng', text: r });
@@ -529,10 +530,14 @@
       [h('option', { value: '', text: '状態: すべて' })].concat(Object.keys(STATES).map(function (k) { return h('option', { value: k, text: STATES[k] }); })));
     var rsSel = h('select', { onchange: function () { filters.reason = rsSel.value; draw(); } },
       [h('option', { value: '', text: '理由: すべて' })].concat(REASONS.map(function (s) { return h('option', { value: s, text: s }); })));
+    // 写真の有無（問題・答えのどちらかに写真があれば「写真あり」）
+    var phSel = h('select', { onchange: function () { filters.photo = phSel.value; draw(); } },
+      [['', '写真: すべて'], ['yes', '📷 写真あり'], ['no', '写真なし']].map(function (o) { return h('option', { value: o[0], text: o[1] }); }));
+    phSel.value = filters.photo;
     var qIn = h('input', { type: 'search', placeholder: '検索', value: filters.q, oninput: function () { filters.q = qIn.value; draw(); } });
     subjSel.value = filters.subject; stSel.value = filters.state; rsSel.value = filters.reason;
     var list = h('div', { class: 'list' });
-    body.appendChild(h('div', { class: 'filters' }, [poolSel, unitSel, subjSel, stSel, rsSel, qIn,
+    body.appendChild(h('div', { class: 'filters' }, [poolSel, unitSel, subjSel, stSel, rsSel, phSel, qIn,
       h('button', { class: 'chip', text: '↻', title: '再読み込み', onclick: function () { items = null; units = null; render(); } })]));
     body.appendChild(list);
     function draw() {
@@ -540,6 +545,7 @@
       var shown = items.filter(function (i) {
         return (!filters.subject || i.subject === filters.subject) && (!filters.state || i.stats.state === filters.state) &&
           (!filters.reason || i.reason === filters.reason) &&
+          (!filters.photo || (filters.photo === 'yes') === hasPhoto(i)) &&
           (!q || [i.sentence, i.answer, i.reading, i.source, i.qno, i.explanation].join(' ').indexOf(q) >= 0);
       });
       if (!shown.length) { list.replaceChildren(h('div', { class: 'empty', text: items.length ? '該当なし' : 'まだ問題がありません。「登録」から追加してください' })); return; }
@@ -549,7 +555,7 @@
         var when = s.state === 'graduated' ? '卒業 ' + md(s.graduated_on) : s.state === 'suspended' ? '停止中' : s.state === 'known' ? 'チャレンジで○'
           : s.state === 'new' ? (i.pool === 'new' ? 'チャレンジ待ち' : '未出題') : '次回 ' + md(s.next);
         var dirs = s.directions.map(function (d) { return d === 'write' ? '書き' : d === 'read' ? '読み' : ''; }).filter(Boolean).join('+');
-        var metaLine = [i.pool === 'new' ? '新しい問題' : '', dirs || i.subject, when, s.reps + '回', s.correct === null ? '' : '正答' + s.correct + '%'].filter(Boolean).join('・');
+        var metaLine = [hasPhoto(i) ? '📷 写真' : '', i.pool === 'new' ? '新しい問題' : '', dirs || i.subject, when, s.reps + '回', s.correct === null ? '' : '正答' + s.correct + '%'].filter(Boolean).join('・');
         return h('div', { class: 'item', onclick: function () { openDetail(i); } }, [
           h('div', { class: 'q' }, label(i)), stageEl(s), h('div', { class: 'meta', text: metaLine }), dots(s.last5)
         ]);
