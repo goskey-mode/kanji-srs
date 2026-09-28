@@ -290,7 +290,8 @@
       if (c.photo_a_url) main.push(photoEl(c.photo_a_url));
       if (c.answer) main.push(h('div', { class: 'answer' + (c.answer.length > 8 ? ' long' : ''), text: c.answer }));
     }
-    if (c.explanation) main.push(h('div', { class: 'explain', text: (c.type === 'C' ? 'ポイント: ' : '') + c.explanation }));
+    // 漢字の問題の解説は、その単語の意味として表示する
+    if (c.explanation) main.push(h('div', { class: 'explain', text: (KS.isKanji(c) ? 'いみ：' : c.type === 'C' ? 'ポイント: ' : '') + c.explanation }));
 
     var foot;
     if (practice) {

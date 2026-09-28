@@ -200,11 +200,14 @@
       .filter(function (x) { return x.line.trim(); })
       .map(function (x) {
         var cols = x.line.split(/\t|,/).map(function (s) { return s.trim(); });
-        var r = { line: x.line, sentence: cols[0] || '', answer: cols[1] || '', reading: cols[2] || '', prompt_form: cols[3] || '', error: '' };
+        // 4列目以降は意味（答えの画面に「いみ」として表示）。4列目がかなだけなら従来どおり出題表記で、その次が意味
+        var rest = cols.slice(3).filter(function (v) { return v; });
+        var pf = rest.length && /^[ぁ-ゟァ-ヿー]+$/.test(rest[0]) ? rest.shift() : '';
+        var r = { line: x.line, sentence: cols[0] || '', answer: cols[1] || '', reading: cols[2] || '', prompt_form: pf, meaning: rest.join('、'), error: '' };
         var t = KS.fromTestForm(r.sentence, r.answer, r.reading);
         if (t) { r.sentence = t.sentence; if (!r.prompt_form) r.prompt_form = t.prompt_form; }
         var key = ['A', r.sentence, r.answer, ''].join('|');
-        if (cols.length < 3 || cols.length > 4) r.error = '「例文,答え,読み」の3列（出題表記を足すなら4列）にしてください';
+        if (cols.length < 3) r.error = '「例文,答え,読み」の3列以上にしてください';
         else if (!r.sentence || !r.answer || !r.reading) r.error = '空の列があります';
         else if (r.sentence.indexOf(r.answer) < 0) r.error = '例文に「' + r.answer + '」がありません';
         else if (!/^[ぁ-ゟー]+$/.test(r.reading)) r.error = '読みはひらがなで';
@@ -217,7 +220,7 @@
   }
 
   function kanjiForm() {
-    var ta = h('textarea', { class: 'input', placeholder: '大学のコウギを受ける,講義,こうぎ\nスープがアタタかい,温かい,あたたかい',
+    var ta = h('textarea', { class: 'input', placeholder: '大学のコウギを受ける,講義,こうぎ,大学などで先生が話して教えること\nスープがアタタかい,温かい,あたたかい',
       value: meta.kanjiDraft || '', oninput: function () { meta.kanjiDraft = ta.value; saveMeta(); preview(); } });
     var readChk = h('input', { type: 'checkbox' });
     readChk.checked = !!meta.makeRead;
@@ -231,7 +234,9 @@
         rows.map(function (r) {
           if (r.error) return h('tr', {}, [h('td', { class: 'mid', text: r.error + '：' + r.line }), h('td', { text: r.answer }), h('td', { class: 'mid', text: '!' })]);
           var p = KS.promptParts({ sentence: r.sentence, answer: r.answer, reading: r.reading, prompt_form: r.prompt_form, direction: 'write' });
-          return h('tr', {}, [h('td', {}, [p.before, h('mark', { text: p.mark }), p.after]), h('td', { text: r.answer }), h('td', { class: 'ok', text: '✓' })]);
+          return h('tr', {}, [h('td', {}, [p.before, h('mark', { text: p.mark }), p.after,
+            r.meaning ? h('div', { class: 'muted', style: 'font-size:12px', text: 'いみ：' + r.meaning }) : null]),
+            h('td', { text: r.answer }), h('td', { class: 'ok', text: '✓' })]);
         })));
       btn.textContent = ok.length ? ok.length + '件を登録' : '登録';
       btn.disabled = !ok.length;
@@ -244,7 +249,7 @@
       btn.disabled = true;
       call('addItems', ok.map(function (r) {
         return { type: 'A', subject: '国語', unit: '漢字', sentence: r.sentence, answer: r.answer, reading: r.reading,
-          prompt_form: r.prompt_form, source: m.source, source_date: m.source_date, reason: m.reason, origin: m.origin,
+          prompt_form: r.prompt_form, explanation: r.meaning, source: m.source, source_date: m.source_date, reason: m.reason, origin: m.origin,
           make_read: readChk.checked };
       })).then(function (res) {
         // 登録できなかった行と、もともとエラーだった行だけ入力欄に残す
@@ -264,7 +269,7 @@
     if (!items) call('listItems').then(function (r) { items = r; preview(); }).catch(function () {});
     setTimeout(preview);
     return h('div', { class: 'form' }, commonMeta().concat([
-      field('1行1問「例文,答え,読み」。例文はテストのままカタカナでも、漢字に直してもよい（カンマかタブ区切り）', ta),
+      field('1行1問「例文,答え,読み,意味」。意味は省略してもよい（答えの画面に表示）。例文はテストのままカタカナでも、漢字に直してもよい（カンマかタブ区切り。意味の中の区切りは「、」）', ta),
       table,
       h('label', { class: 'chk' }, [readChk, '読みのカードも作る']),
       btn
