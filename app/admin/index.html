@@ -88,7 +88,7 @@
   .gtable { width: calc(100% - 32px); margin: 0 16px; border-collapse: collapse; font-size: 13px; }
   .gtable th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 4px; }
   .gtable td { border-top: 1px solid var(--line); padding: 6px 4px; }
-  .gtable td.n { text-align: right; white-space: nowrap; }
+  .gtable td.n, .gtable th.n { text-align: right; white-space: nowrap; }
   .rate { display: inline-block; width: 60px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 4px; }
   .rate i { display: block; height: 100%; background: var(--ok); }
   @media (max-width: 380px) { .row3 { grid-template-columns: 1fr 1fr; } }
@@ -775,7 +775,7 @@
   }
   function groupTable(rows, head) {
     if (!rows.length) return h('div', { class: 'empty', text: 'まだありません' });
-    return h('table', { class: 'gtable' }, [h('tr', {}, [h('th', { text: head }), h('th', { text: '問題' }), h('th', { text: '解いた' }), h('th', { text: '×' }), h('th', { text: '正答率' })])]
+    return h('table', { class: 'gtable' }, [h('tr', {}, [h('th', { text: head }), h('th', { class: 'n', text: '問題' }), h('th', { class: 'n', text: '解いた' }), h('th', { class: 'n', text: '×' }), h('th', { class: 'n', text: '正答率' })])]
       .concat(rows.map(function (r) {
         var rate = r.reps ? Math.round(r.o / r.reps * 100) : null;
         return h('tr', {}, [h('td', { text: r.k }), h('td', { class: 'n', text: r.items }), h('td', { class: 'n', text: r.reps }), h('td', { class: 'n ng', text: r.x }),
@@ -791,7 +791,7 @@
   }
   var KINDS = { write: '漢字の書き', read: '漢字の読み', single: 'その他の問題', photo: '写真の問題' };
   function timingTable(rows) {
-    return h('table', { class: 'gtable' }, [h('tr', {}, [h('th', { text: '種類' }), h('th', { text: '設定' }), h('th', { text: '実測' }), h('th', { text: '件数' })])]
+    return h('table', { class: 'gtable' }, [h('tr', {}, [h('th', { text: '種類' }), h('th', { class: 'n', text: '設定' }), h('th', { class: 'n', text: '実測' }), h('th', { class: 'n', text: '件数' })])]
       .concat(rows.map(function (r) {
         return h('tr', {}, [h('td', { text: KINDS[r.kind] || r.kind }), h('td', { class: 'n', text: r.setting + '秒' }),
           h('td', { class: 'n', text: r.median === null ? '—' : r.median + '秒' }), h('td', { class: 'n', text: r.n })]);
