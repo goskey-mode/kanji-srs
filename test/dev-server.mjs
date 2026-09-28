@@ -26,6 +26,10 @@ async function call(fn, ...args) {
   return j.result;
 }
 
+// --import=<sql> で取り込み用の SQL（tools/import_new.py の出力）を流す
+const importArg = process.argv.find((a) => a.startsWith('--import='));
+if (importArg) env.DB.raw.exec(fs.readFileSync(importArg.slice(9), 'utf8'));
+
 const newArg = process.argv.find((a) => a.startsWith('--new='));
 if (newArg) env.DB.raw.prepare("UPDATE settings SET value = ? WHERE key = 'new_per_day'").run(newArg.slice(6));
 

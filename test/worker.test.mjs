@@ -484,3 +484,24 @@ test('チャレンジでも「つづき」の新しいカード数の枠は減�
   await t.api('submitReviews', S, [rvn(ch[0].card_id, 'x', '2026-10-01T09:00:00+09:00')]);
   assert.equal((await t.api('getToday', S)).cards.length, 4); // チャレンジで入った1枚は数えない
 });
+
+test('一覧は登録先・単元で絞って返す／単元の一覧と重複チェック用の軽い一覧', async () => {
+  const t = setup();
+  await t.api('addItems', A, [
+    kanji('大学の講義を受ける', '講義', 'こうぎ'),
+    kanji('話し合いで円満に解決する', '円満', 'えんまん', { pool: 'new', unit: '漢字1年生' }),
+    kanji('五感を使って観察する', '五感', 'ごかん', { pool: 'new', unit: '漢字1年生' }),
+    { type: 'A', subject: '国語', unit: '四字熟語', sentence: '（　　）をくり返す', answer: '試行錯誤', pool: 'new' }
+  ]);
+  assert.deepEqual((await t.api('listItems', A, { pool: 'mistake' })).map((i) => i.answer), ['講義']);
+  assert.deepEqual((await t.api('listItems', A, { pool: 'new', unit: '漢字1年生' })).map((i) => i.answer).sort(), ['五感', '円満']);
+  assert.equal((await t.api('listItems', A, { pool: 'new', limit: 1 })).length, 1);
+  assert.equal((await t.api('listItems', A)).length, 4); // 省略時はすべて
+  const ch = await t.api('getChallenge', S, '漢字1年生', 10, 'write');
+  await t.api('submitReviews', S, ch.map((c, i) => rvn(c.card_id, 'o', '2026-10-01T10:0' + i + ':00+09:00')));
+  const units = await t.api('listUnits', A);
+  assert.deepEqual(units.map((u) => [u.pool, u.unit, u.n, u.known]), [['mistake', '', 1, 0], ['new', '漢字1年生', 2, 2], ['new', '四字熟語', 1, 0]]);
+  const keys = await t.api('listKeys', A);
+  assert.equal(keys.length, 4);
+  assert.deepEqual(keys.find((k) => k[2] === '講義'), ['A', '大学の講義を受ける', '講義', '']);
+});

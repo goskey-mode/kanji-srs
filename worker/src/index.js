@@ -45,6 +45,8 @@ const API = {
   addItems: ['admin', addItems],
   uploadPhoto: ['admin', uploadPhoto],
   listItems: ['admin', listItems],
+  listUnits: ['admin', listUnits],
+  listKeys: ['admin', listKeys],
   itemHistory: ['admin', itemHistory],
   updateItem: ['admin', updateItem],
   setStatus: ['admin', setStatus],
@@ -403,21 +405,33 @@ async function addItems(c, role, list) {
   return { added: newItems.length, cards: newCards.length, skipped };
 }
 
-async function listItems(c) {
-  const [itemsRes, cardAgg, revAgg, last5] = await c.db.batch([
-    c.db.prepare("SELECT * FROM items WHERE status <> 'deleted' ORDER BY created_at DESC, item_id"),
+// opts: { pool: 'mistake' | 'new'（省略ですべて）, unit: 単元, limit, offset }
+// 新しい問題が千件以上あるため、登録先・単元で絞ってから集計する（無料プランの CPU 時間と通信量を抑える）
+async function listItems(c, role, opts) {
+  opts = opts || {};
+  const where = ["status <> 'deleted'"], binds = [];
+  if (['mistake', 'new'].includes(opts.pool)) { where.push('pool = ?'); binds.push(opts.pool); }
+  if (typeof opts.unit === 'string' && opts.unit) { where.push('unit = ?'); binds.push(opts.unit); }
+  const limit = Math.max(1, Math.min(500, Math.floor(Number(opts.limit) || 300)));
+  const offset = Math.max(0, Math.floor(Number(opts.offset) || 0));
+  const itemsRes = await c.db.prepare(`SELECT * FROM items WHERE ${where.join(' AND ')} ORDER BY created_at DESC, item_id LIMIT ? OFFSET ?`)
+    .bind(...binds, limit, offset).all();
+  if (!itemsRes.results.length) return [];
+  const ids = JSON.stringify(itemsRes.results.map((i) => i.item_id));
+  const [cardAgg, revAgg, last5] = await c.db.batch([
     c.db.prepare(`SELECT item_id, MIN(stage) AS stage, COUNT(*) AS n,
         SUM(state IN ('spot', 'retired')) AS grad, SUM(state = 'new') AS fresh, SUM(state = 'known') AS known,
         MIN(CASE WHEN state = 'learning' AND due <> '' THEN due END) AS next,
         MAX(CASE WHEN state IN ('spot', 'retired') THEN substr(last_reviewed_at, 1, 10) END) AS graduated_on,
         MAX(lapses) AS lapses, group_concat(direction) AS dirs
-      FROM cards GROUP BY item_id`),
-    c.db.prepare("SELECT c.item_id, COUNT(*) AS reps, SUM(r.result = '○') AS ok FROM reviews r JOIN cards c ON c.card_id = r.card_id GROUP BY c.item_id"),
+      FROM cards WHERE item_id IN (SELECT value FROM json_each(?)) GROUP BY item_id`).bind(ids),
+    c.db.prepare(`SELECT c.item_id, COUNT(*) AS reps, SUM(r.result = '○') AS ok FROM reviews r JOIN cards c ON c.card_id = r.card_id
+      WHERE c.item_id IN (SELECT value FROM json_each(?)) GROUP BY c.item_id`).bind(ids),
     c.db.prepare(`SELECT item_id, result FROM (
         SELECT c.item_id, r.result, r.answered_at,
           ROW_NUMBER() OVER (PARTITION BY c.item_id ORDER BY r.answered_at DESC) AS rn
-        FROM reviews r JOIN cards c ON c.card_id = r.card_id)
-      WHERE rn <= 5 ORDER BY item_id, answered_at`)
+        FROM reviews r JOIN cards c ON c.card_id = r.card_id WHERE c.item_id IN (SELECT value FROM json_each(?)))
+      WHERE rn <= 5 ORDER BY item_id, answered_at`).bind(ids)
   ]);
   const ca = Object.fromEntries(cardAgg.results.map((r) => [r.item_id, r]));
   const ra = Object.fromEntries(revAgg.results.map((r) => [r.item_id, r]));
@@ -441,6 +455,20 @@ async function listItems(c) {
     out.push(await withPhotoUrls(c, it));
   }
   return out;
+}
+
+// 一覧の絞り込み用: 登録先ごとの単元と件数
+async function listUnits(c) {
+  const { results } = await c.db.prepare(
+    `SELECT pool, unit, COUNT(*) AS n, SUM(EXISTS (SELECT 1 FROM cards k WHERE k.item_id = items.item_id AND k.state = 'known')) AS known
+     FROM items WHERE status <> 'deleted' GROUP BY pool, unit ORDER BY pool, MIN(created_at)`).all();
+  return results;
+}
+
+// 登録前の重複チェック用に、問題を見分ける列だけを返す（一覧全体より軽い）
+async function listKeys(c) {
+  const { results } = await c.db.prepare("SELECT type, sentence, answer, photo_q FROM items WHERE status <> 'deleted'").all();
+  return results.map((r) => [r.type, r.sentence, r.answer, r.photo_q]);
 }
 
 async function itemHistory(c, role, itemId) {

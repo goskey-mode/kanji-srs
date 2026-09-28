@@ -12,7 +12,7 @@
   .bar .grow { flex: 1; }
   .prog { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
   .prog i { display: block; height: 100%; background: var(--accent); }
-  .main { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  .main { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: safe center; align-items: center;
     gap: 12px; padding: 12px 20px; text-align: center; overflow: auto; }
   .foot { flex: none; padding: 0 16px 16px; display: flex; gap: 12px; justify-content: center; }
   .big { min-height: 64px; min-width: 240px; font-size: 22px; border-radius: 14px; }
@@ -39,6 +39,8 @@
   .g-t { color: var(--mid); border-color: var(--mid); }
   .g-x { color: var(--ng); border-color: var(--ng); }
   .score { font-size: 20px; }
+  .decks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 520px; }
+  .decks button { min-height: 52px; font-size: 16px; padding: 6px 10px; border-radius: 12px; line-height: 1.3; }
   .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .seg button { min-width: 88px; min-height: 44px; border: 0; background: var(--panel); color: var(--muted); font-size: 16px; }
   .seg button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; }
@@ -256,10 +258,11 @@
         main.push(h('div', { class: 'seg' }, DIRS.map(function (x) {
           return h('button', { class: x[0] === dir ? 'on' : '', text: x[1], onclick: function () { KS.store(KEY_DIR, x[0]); showDecks(); } });
         })));
-        decks.forEach(function (d) {
+        // 種類が多くても1画面に収まるよう、2列で並べる
+        main.push(h('div', { class: 'decks' }, decks.map(function (d) {
           var n = count(d);
-          main.push(h('button', { class: 'btn big', disabled: !n, onclick: function () { beginChallenge(d.deck); } }, [d.deck + '（のこり ' + n + '問）']));
-        });
+          return h('button', { class: 'btn', disabled: !n, onclick: function () { beginChallenge(d.deck); } }, [d.deck, h('br'), 'のこり ' + n + '問']);
+        })));
       }
       main.push(h('button', { class: 'btn ghost', text: 'もどる', onclick: start }));
       setScreen([h('span', { text: 'チャレンジ' }), h('span', { class: 'grow' }), h('span', { id: 'sync', class: 'muted', text: syncLabel() })], main);
