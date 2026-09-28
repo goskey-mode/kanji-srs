@@ -66,7 +66,8 @@ http.createServer(async (req, res) => {
 }).listen(8787, '127.0.0.1');
 
 // 画面（GitHub Pages の代わり）
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
 http.createServer((req, res) => {
   const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   const file = path.join(APP, p === '/' ? 'index.html' : p);
