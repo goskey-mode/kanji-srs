@@ -65,6 +65,32 @@
   .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .seg button { min-width: 88px; min-height: 44px; border: 0; background: var(--panel); color: var(--muted); font-size: 16px; }
   .seg button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+  /* 漢字図鑑（この画面だけはスクロールしてよい） */
+  .main.top { justify-content: flex-start; }
+  .main.top > * { flex-shrink: 0; } /* 縦に長くなっても縮めずにスクロールさせる */
+  .zsum { font-size: 15px; color: var(--muted); }
+  .zsum b { color: var(--text); font-size: 18px; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .badge { font-size: 13px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); opacity: .6; }
+  .badge.got { opacity: 1; color: var(--accent-text); background: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .zgrades button { min-width: 0; padding: 0 12px; }
+  .zgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap: 4px; width: 100%; max-width: 600px; }
+  .zc { position: relative; aspect-ratio: 1; border-radius: 6px; border: 1px solid var(--line); background: var(--panel);
+    font-family: var(--qfont); font-size: 22px; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .zc.n { color: var(--muted); opacity: .45; }
+  .zc.k { background: var(--accent-soft); }
+  .zc.l { border: 2px solid var(--accent); }
+  .zc.l i { position: absolute; left: 3px; right: 3px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .zc.l i b { display: block; height: 100%; background: var(--accent); }
+  .zc.g { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 700; }
+  .zc.g::after { content: '★'; position: absolute; top: 0; right: 2px; font-size: 10px; }
+  .zlegend { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; font-size: 12px; color: var(--muted); }
+  .zlegend .zc { width: 22px; font-size: 12px; display: inline-flex; vertical-align: middle; margin-right: 3px; }
+  .zcard { background: var(--panel); color: var(--text); border-radius: 14px; padding: 16px; width: calc(100% - 32px); max-width: 420px;
+    max-height: 90%; overflow: auto; text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .zcard .zbig { font-family: var(--qfont); font-size: 72px; line-height: 1.1; }
+  .zcard table { border-collapse: collapse; font-size: 15px; }
+  .zcard td { padding: 2px 8px; text-align: left; }
   @media (max-height: 480px) {
     .big { min-height: 52px; font-size: 19px; }
     .grade { min-height: 60px; }
@@ -261,6 +287,7 @@
     }))]));
     var fresh = t.cards.filter(function (c) { return c.stage === 0 && c.state === 'learning'; }).length;
     main.push(h('div', { class: 'chips' }, [
+      h('button', { class: 'chip', text: '📖 かんじ図鑑', onclick: showZukan }),
       h('span', { class: 'chip', text: '卒業した問題 ' + t.graduated }),
       n ? h('span', { class: 'chip', text: 'はじめての問題 ' + fresh }) : null
     ]));
@@ -283,6 +310,69 @@
     state.practiceFrom = from;
     state.idx = 0;
     showQuestion(true);
+  }
+
+  // ───── 漢字図鑑 ─────
+  // 1026字を学年ごとにマスで並べる。まだ（うすい）／知ってた（うすい色）／練習中（枠と段階のバー）／卒業（濃い色と★）
+  var KEY_ZGRADE = 'kanjisrs_zukan_grade';
+  var ZSTATE = { n: 'まだ', k: '知ってた', l: '練習中', g: '卒業' };
+  function showZukan() {
+    showLoading();
+    KS.call('getZukan', state.pin).then(function (z) { state.zukan = z; drawZukan(); }, function (e) { showError(e, showZukan); });
+  }
+  function drawZukan() {
+    var z = state.zukan;
+    var grade = Number(KS.load(KEY_ZGRADE)) || 1;
+    var chars = z.chars.filter(function (c) { return c[1] === grade; });
+    var cnt = { n: 0, k: 0, l: 0, g: 0 };
+    chars.forEach(function (c) { cnt[c[2]]++; });
+    var main = [
+      h('div', { class: 'zsum' }, ['★卒業 ', h('b', { text: z.count.g }), '・練習中 ', h('b', { text: z.count.l }), '・知ってた ', h('b', { text: z.count.k }),
+        ' ／ ' + z.total + '字']),
+      h('div', { class: 'badges' }, z.badges.map(function (b) {
+        return h('span', { class: 'badge' + (b.got ? ' got' : ''), text: b.kind === 'grad' ? '卒業' + b.n + '字' : 'れんぞく' + b.n + '日' });
+      })),
+      h('div', { class: 'seg zgrades' }, [1, 2, 3, 4, 5, 6].map(function (g) {
+        return h('button', { class: g === grade ? 'on' : '', text: g + '年', onclick: function () { KS.store(KEY_ZGRADE, String(g)); drawZukan(); } });
+      })),
+      h('div', { class: 'hint', text: grade + '年生 ' + chars.length + '字：★' + cnt.g + '・練習中 ' + cnt.l + '・知ってた ' + cnt.k + '・まだ ' + cnt.n }),
+      h('div', { class: 'zgrid' }, chars.map(function (c) {
+        var kids = [c[0]];
+        if (c[2] === 'l') kids.push(h('i', {}, [h('b', { style: 'width:' + Math.round(c[3] / 6 * 100) + '%' })]));
+        return h('button', { class: 'zc ' + c[2], title: ZSTATE[c[2]], onclick: function () { showKanji(c[0]); } }, kids);
+      })),
+      h('div', { class: 'zlegend' }, ['n', 'k', 'l', 'g'].map(function (k) {
+        return h('span', {}, [h('span', { class: 'zc ' + k, text: '字' }), ZSTATE[k]]);
+      })),
+      h('div', { class: 'hint', text: '字をおすと、ことばと例文が見られます' })
+    ];
+    setScreen([h('span', { text: 'かんじ図鑑' }), h('span', { class: 'grow' }), h('button', { class: 'chip', text: 'もどる', onclick: showHome })], main);
+    app.querySelector('.main').classList.add('top');
+  }
+  function cardState(c) {
+    if (c.state === 'learning') return '練習中（' + c.stage + '/6）';
+    return { 'new': 'まだ', known: '知ってた', spot: '卒業（ときどき確認）', retired: '卒業' }[c.state] || c.state;
+  }
+  function showKanji(ch) {
+    var card = h('div', { class: 'zcard', onclick: function (e) { e.stopPropagation(); } }, [h('div', { class: 'zbig', text: ch }), h('div', { class: 'hint', text: 'よみこみ中…' })]);
+    var ov = h('div', { class: 'overlay', onclick: function () { ov.remove(); } }, [card]);
+    document.body.appendChild(ov);
+    KS.call('getKanjiInfo', state.pin, [ch]).then(function (k) {
+      var kids = [h('div', { class: 'zbig', text: ch }), h('div', { class: 'hint', text: k.grade + '年生の漢字' })];
+      if (!k.item_id) {
+        kids.push(h('div', { text: 'この字のことばは、まだ登録されていません' }));
+      } else {
+        kids.push(h('div', { class: 'answer long', text: k.answer }), h('div', { class: 'reading', text: k.reading }));
+        if (k.explanation) kids.push(h('div', { class: 'explain', text: 'いみ：' + k.explanation }));
+        var at = k.sentence.indexOf(k.answer);
+        kids.push(h('div', { class: 'qtext' }, at >= 0 ? [k.sentence.slice(0, at), h('b', { text: k.answer }), k.sentence.slice(at + k.answer.length)] : [k.sentence]));
+        kids.push(h('table', {}, k.cards.map(function (c) {
+          return h('tr', {}, [h('td', { text: c.direction === 'write' ? '書き' : c.direction === 'read' ? '読み' : '問題' }), h('td', { text: cardState(c) })]);
+        })));
+      }
+      kids.push(h('button', { class: 'btn ghost', text: 'とじる', onclick: function () { ov.remove(); } }));
+      card.replaceChildren.apply(card, kids);
+    }, function (e) { card.replaceChildren(h('div', { class: 'ng', text: KS.message(e) }), h('button', { class: 'btn ghost', text: 'とじる', onclick: function () { ov.remove(); } })); });
   }
 
   // ───── 新しい問題のチャレンジ ─────

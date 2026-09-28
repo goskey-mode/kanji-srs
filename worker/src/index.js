@@ -3,7 +3,7 @@
 // 無料プランの制約に合わせている: 1回の呼び出しで命令50個まで・CPU時間が短い → 集計はSQL、複数行の書き込みは json_each で1命令にまとめる
 import {
   DEFAULT_SETTINGS, RESULT_MARK, ITEM_FIELDS,
-  studyDay, addDays, cost, streak, normalizeItem, dupKey, replay, answer
+  studyDay, addDays, cost, streak, bestStreak, normalizeItem, dupKey, replay, answer
 } from './logic.js';
 
 const PHOTO_MAX_BYTES = 1500000;
@@ -42,6 +42,8 @@ const API = {
   getChallenge: ['study', getChallenge],
   submitReviews: ['study', submitReviews],
   finishDay: ['study', finishDay],
+  getZukan: ['study', getZukan],
+  getKanjiInfo: ['study', getKanjiInfo],
   addItems: ['admin', addItems],
   uploadPhoto: ['admin', uploadPhoto],
   listItems: ['admin', listItems],
@@ -51,6 +53,7 @@ const API = {
   updateItem: ['admin', updateItem],
   setStatus: ['admin', setStatus],
   getOverview: ['admin', getOverview],
+  getDashboard: ['admin', getDashboard],
   exportTable: ['admin', exportTable],
   deleteReviews: ['admin', deleteReviews],
   resetItem: ['admin', resetItem],
@@ -167,6 +170,15 @@ function toBytes(v) {
   return new Uint8Array(0);
 }
 
+// 定着率の推移用。今日の行がまだ無いときだけ記録する（INSERT OR IGNORE なので、あれば何も変わらない）
+const RETAINED = "(c.state IN ('spot', 'retired') OR (c.state = 'learning' AND c.stage >= 4 AND c.last_result = '○'))";
+function snapshotStmt(c, day) {
+  return c.db.prepare(`INSERT OR IGNORE INTO snapshots (study_day, cards_total, cards_retained)
+    SELECT ?1, COUNT(*), COALESCE(SUM(${RETAINED}), 0) FROM cards c JOIN items i ON i.item_id = c.item_id
+    WHERE NOT EXISTS (SELECT 1 FROM snapshots WHERE study_day = ?1)
+      AND i.status = 'active' AND c.state IN ('learning', 'spot', 'retired')`).bind(day);
+}
+
 async function withPhotoUrls(c, obj) {
   obj.photo_q_url = await photoUrl(c, obj.photo_q);
   obj.photo_a_url = await photoUrl(c, obj.photo_a);
@@ -271,7 +283,8 @@ async function getToday(c) {
   }
   const s = streak(dayRows, today, st);
   if (s.newFreezes.length) writes.push(upsertDaysStmt(c, s.newFreezes.map((d) => ({ study_day: d, freeze_used: 1 })), ['freeze_used']));
-  if (writes.length) await c.db.batch(writes);
+  writes.push(snapshotStmt(c, today));
+  await c.db.batch(writes);
   const view = async (list) => { const out = []; for (const r of list) out.push(await withPhotoUrls(c, r)); return out; };
   shuffle(queue);
   shuffle(extra);
@@ -539,12 +552,107 @@ async function getOverview(c) {
   };
 }
 
+// ───────── 漢字図鑑 ─────────
+// 字ごとの状態: n = まだ / k = 知ってた（チャレンジで○）/ l = 練習中（段階つき）/ g = 卒業
+// 1字＝1語（その字を学ぶ問題）。語のカード（書き・読み）のうち、練習中が1枚でもあれば練習中、なければ卒業、知ってたの順
+const BADGES_GRAD = [10, 50, 100, 300];
+const BADGES_STREAK = [7, 30, 100];
+async function getZukan(c) {
+  const st = await settings(c);
+  const today = studyDay(c.now, st.day_start_hour);
+  const [rows, daysRes] = await c.db.batch([
+    c.db.prepare(`SELECT k.char, k.grade, SUM(c.state = 'learning') AS l, MIN(CASE WHEN c.state = 'learning' THEN c.stage END) AS stage,
+        SUM(c.state IN ('spot', 'retired')) AS g, SUM(c.state = 'known') AS k
+      FROM kanji k LEFT JOIN items i ON i.item_id = k.item_id AND i.status = 'active' LEFT JOIN cards c ON c.item_id = i.item_id
+      GROUP BY k.char ORDER BY k.grade, k.ord`),
+    c.db.prepare('SELECT study_day, completed, freeze_used FROM days')
+  ]);
+  const count = { n: 0, k: 0, l: 0, g: 0 };
+  const chars = rows.results.map((r) => {
+    const s = r.l ? 'l' : r.g ? 'g' : r.k ? 'k' : 'n';
+    count[s]++;
+    return [r.char, r.grade, s, r.l ? r.stage : 0];
+  });
+  const cur = streak(daysRes.results, today, st).streak;
+  const best = Math.max(cur, bestStreak(daysRes.results));
+  return {
+    chars, count, total: chars.length, streak: cur, bestStreak: best,
+    badges: BADGES_GRAD.map((n) => ({ kind: 'grad', n, got: count.g >= n }))
+      .concat(BADGES_STREAK.map((n) => ({ kind: 'streak', n, got: best >= n })))
+  };
+}
+
+// 図鑑でマスを押したとき: その字の語・例文・意味と、カードの状態
+async function getKanjiInfo(c, role, ch) {
+  if (typeof ch !== 'string' || !ch || ch.length > 2) throw new Error('BAD_ARGS');
+  const k = await c.db.prepare(`SELECT k.char, k.grade, i.item_id, i.sentence, i.answer, i.reading, i.prompt_form, i.explanation, i.pool
+    FROM kanji k LEFT JOIN items i ON i.item_id = k.item_id AND i.status = 'active' WHERE k.char = ?`).bind(ch).first();
+  if (!k) throw new Error('NOT_FOUND');
+  const cards = k.item_id
+    ? (await c.db.prepare('SELECT direction, state, stage, due, reps, last_result FROM cards WHERE item_id = ? ORDER BY direction DESC').bind(k.item_id).all()).results
+    : [];
+  return { ...k, cards };
+}
+
+// ───────── ダッシュボード（親） ─────────
+// 改善 = ×が2回以上あって直近3回が続けて○ / 苦手 = ×が3回以上（改善したものは除く）
+const LABEL_COLS = 'i.item_id, i.type, i.subject, i.sentence, i.answer, i.reading, i.prompt_form, i.photo_q, i.source, i.qno';
+function median(a) {
+  if (!a.length) return null;
+  const s = a.slice().sort((x, y) => x - y);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+}
+async function getDashboard(c) {
+  const st = await settings(c);
+  const today = studyDay(c.now, st.day_start_hour);
+  const group = (key) => c.db.prepare(`SELECT ${key} AS k, COUNT(DISTINCT i.item_id) AS items, COUNT(r.review_id) AS reps,
+      COALESCE(SUM(r.result = '×'), 0) AS x, COALESCE(SUM(r.result = '○'), 0) AS o
+    FROM items i LEFT JOIN cards c ON c.item_id = i.item_id LEFT JOIN reviews r ON r.card_id = c.card_id
+    WHERE i.status = 'active' AND i.pool = 'mistake' GROUP BY 1 ORDER BY items DESC`);
+  const [trend, cal, byReason, bySubject, hist, durs] = await c.db.batch([
+    c.db.prepare('SELECT study_day, cards_total, cards_retained FROM snapshots ORDER BY study_day DESC LIMIT 400'),
+    c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
+    group(`CASE WHEN i.reason <> '' THEN i.reason WHEN i.registered_pool = 'new' THEN 'チャレンジで間違えた' ELSE '（未記入）' END`),
+    group(`COALESCE(NULLIF(i.subject, ''), 'その他')`),
+    c.db.prepare(`SELECT item_id, SUM(result = '×') AS x, SUM(rn <= 3) AS last3, SUM(rn <= 3 AND result = '○') AS last3o FROM (
+        SELECT c.item_id, r.result, ROW_NUMBER() OVER (PARTITION BY c.item_id ORDER BY r.answered_at DESC) AS rn
+        FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE i.status = 'active')
+      GROUP BY item_id HAVING x >= 2`),
+    c.db.prepare(`SELECT c.direction, i.photo_q <> '' AS photo, r.duration_sec AS sec FROM reviews r
+      JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id
+      WHERE r.duration_sec > 0 AND r.study_day >= ? ORDER BY r.answered_at DESC LIMIT 3000`).bind(addDays(today, -60))
+  ]);
+  const improvedIds = [], weakIds = [];
+  for (const r of hist.results) {
+    if (r.last3 === 3 && r.last3o === 3) improvedIds.push(r.item_id);
+    else if (r.x >= 3) weakIds.push(r.item_id);
+  }
+  const x = Object.fromEntries(hist.results.map((r) => [r.item_id, r.x]));
+  const ids = improvedIds.concat(weakIds);
+  const labels = ids.length
+    ? Object.fromEntries((await c.db.prepare(`SELECT ${LABEL_COLS} FROM items i WHERE i.item_id IN (SELECT value FROM json_each(?))`)
+      .bind(JSON.stringify(ids)).all()).results.map((r) => [r.item_id, r]))
+    : {};
+  const pick = (list) => list.filter((id) => labels[id]).sort((a, b) => x[b] - x[a]).slice(0, 20).map((id) => ({ ...labels[id], x: x[id] }));
+  // 見積もり時間の実測（直近60日の中央値）。設定値と比べて、1日の量の見直しに使う
+  const kinds = { write: [], read: [], single: [], photo: [] };
+  for (const r of durs.results) kinds[r.photo ? 'photo' : r.direction] && kinds[r.photo ? 'photo' : r.direction].push(r.sec);
+  const timing = Object.keys(kinds).map((k) => ({ kind: k, n: kinds[k].length, median: median(kinds[k]), setting: st['sec_' + k] }));
+  return {
+    today, trend: trend.results.reverse(), calendar: cal.results,
+    byReason: byReason.results, bySubject: bySubject.results,
+    improved: pick(improvedIds), weak: pick(weakIds), timing
+  };
+}
+
 // CSV 書き出し用。CPU時間の上限に収まるよう1回5000行ずつ返す
 const EXPORTS = {
   items: 'SELECT * FROM items ORDER BY created_at, item_id',
   cards: 'SELECT * FROM cards ORDER BY item_id, card_id',
   reviews: 'SELECT * FROM reviews ORDER BY answered_at, review_id',
-  days: 'SELECT * FROM days ORDER BY study_day'
+  days: 'SELECT * FROM days ORDER BY study_day',
+  snapshots: 'SELECT * FROM snapshots ORDER BY study_day'
 };
 async function exportTable(c, role, name, offset) {
   if (!EXPORTS[name]) throw new Error('BAD_ARGS');
@@ -622,7 +730,8 @@ async function resetDay(c, role, day) {
   const ids = [...new Set(revCards.results.concat(introCards.results).map((x) => x.card_id))];
   const [delRev] = await c.db.batch([
     c.db.prepare('DELETE FROM reviews WHERE study_day = ?').bind(day),
-    c.db.prepare('DELETE FROM days WHERE study_day = ?').bind(day)
+    c.db.prepare('DELETE FROM days WHERE study_day = ?').bind(day),
+    c.db.prepare('DELETE FROM snapshots WHERE study_day = ?').bind(day)
   ]);
   await rebuildCards(c, ids);
   return { deleted: delRev.meta.changes, cards: ids.length };

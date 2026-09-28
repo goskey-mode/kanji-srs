@@ -71,6 +71,26 @@
   .photos { display: flex; gap: 8px; }
   .photos img { max-width: 50%; max-height: 180px; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; }
   .empty { padding: 24px 16px; color: var(--muted); text-align: center; }
+  /* ダッシュボード */
+  .pad { padding: 0 16px; }
+  .trend svg { width: 100%; max-width: 688px; height: 160px; display: block; }
+  .trend .now { font-size: 14px; margin-bottom: 4px; }
+  .cal-head { display: flex; align-items: center; gap: 8px; padding: 0 16px 6px; }
+  .cal-head b { flex: 1; text-align: center; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 0 16px; }
+  .cal div { min-height: 44px; border-radius: 6px; font-size: 11px; padding: 2px 4px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); line-height: 1.3; }
+  .cal div.w { background: none; border: 0; text-align: center; min-height: 0; }
+  .cal div.none { background: none; border: 0; }
+  .cal div.did { background: var(--accent-soft); color: var(--text); }
+  .cal div.done { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .cal div.today { outline: 2px solid var(--mid); }
+  .cal b { display: block; font-size: 14px; }
+  .gtable { width: calc(100% - 32px); margin: 0 16px; border-collapse: collapse; font-size: 13px; }
+  .gtable th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 4px; }
+  .gtable td { border-top: 1px solid var(--line); padding: 6px 4px; }
+  .gtable td.n { text-align: right; white-space: nowrap; }
+  .rate { display: inline-block; width: 60px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 4px; }
+  .rate i { display: block; height: 100%; background: var(--ok); }
   @media (max-width: 380px) { .row3 { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
@@ -648,6 +668,10 @@
   // ───── 状況 ─────
   function renderStatus(body) {
     body.appendChild(h('div', { class: 'empty', text: '読み込み中…' }));
+    var dash = h('div', {}, [h('div', { class: 'empty', text: 'ダッシュボードを読み込み中…' })]);
+    call('getDashboard').then(function (d) { if (tab === 'status') renderDashboard(dash, d); }).catch(function (e) {
+      dash.replaceChildren(h('div', { class: 'empty ng', text: 'ダッシュボードを読み込めませんでした: ' + KS.message(e) }));
+    });
     call('getOverview').then(function (o) {
       if (tab !== 'status') return;
       var max = Math.max.apply(null, o.forecast.map(function (f) { return f.count; }).concat([1]));
@@ -665,18 +689,113 @@
           return h('div', {}, [h('b', { text: f.count }), h('i', { style: 'height:' + Math.round(f.count / max * 100) + 'px' }),
             k === 0 ? '今日' : Number(f.day.slice(5, 7)) + '/' + Number(f.day.slice(8, 10))]);
         })),
-        h('div', { class: 'sec', text: '×が3回以上の問題（覚え方を変える候補）' }),
-        o.struggling.length
-          ? h('div', { class: 'list' }, o.struggling.map(function (s) {
-            return h('div', { class: 'item' }, [h('div', { class: 'q', text: s.sentence || [s.source, s.qno].join(' ') }),
-              h('div', { class: 'ng', text: '×' + s.lapses }), h('div', { class: 'meta', text: '答え: ' + s.answer })]);
-          }))
-          : h('div', { class: 'empty', text: 'ありません' }),
+        dash,
         photoMeter(o.photos),
         resetDayBox(o.today),
         exportBox()
       );
     }).catch(fail);
+  }
+
+  // ───── ダッシュボード ─────
+  var calMonth = null; // 学習カレンダーで表示中の月（'YYYY-MM'）
+  function renderDashboard(box, d) {
+    box.replaceChildren(
+      h('div', { class: 'sec', text: '定着率の推移（その日の始めの時点。定着 = 卒業、または14日以上の間隔の段階で直近が○）' }), trendChart(d.trend),
+      h('div', { class: 'sec', text: '学習カレンダー' }), calendarBox(d),
+      h('div', { class: 'sec', text: '間違えた理由別（まちがえた問題）' }), groupTable(d.byReason, '理由'),
+      h('div', { class: 'sec', text: '科目別（まちがえた問題）' }), groupTable(d.bySubject, '科目'),
+      h('div', { class: 'sec', text: '改善した問題（×が2回以上 → 直近3回が続けて○）' }), itemList(d.improved, 'ok'),
+      h('div', { class: 'sec', text: '苦手な問題（×が3回以上。覚え方を変える候補）' }), itemList(d.weak, 'ng'),
+      h('div', { class: 'sec', text: '1問あたりの時間（直近60日の実測の中央値。1日の量の見積もりに使う設定値との比較）' }), timingTable(d.timing)
+    );
+  }
+  function trendChart(rows) {
+    var box = h('div', { class: 'pad trend' });
+    if (!rows.length) { box.appendChild(h('div', { class: 'muted', text: 'まだ記録がありません（今日から毎日1点ずつたまります）' })); return box; }
+    // 点が多くなったら週ごと（各週の最後の日）にまとめる
+    var pts = rows;
+    if (rows.length > 60) {
+      var byWeek = {};
+      rows.forEach(function (r) { var t = new Date(r.study_day + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() - t.getUTCDay()); byWeek[t.toISOString().slice(0, 10)] = r; });
+      pts = Object.keys(byWeek).sort().map(function (k) { return byWeek[k]; });
+    }
+    var last = rows[rows.length - 1];
+    var pct = function (r) { return r.cards_total ? r.cards_retained / r.cards_total * 100 : 0; };
+    box.appendChild(h('div', { class: 'now' }, ['いま: ', h('b', { text: Math.round(pct(last)) + '%' }), '（定着 ' + last.cards_retained + ' ／ 練習したカード ' + last.cards_total + '）']));
+    // 画面の実際の幅で描く（viewBox を引き伸ばすと目盛りの文字がゆがむため）
+    var W = Math.max(280, Math.min(688, document.documentElement.clientWidth - 32)), H = 160, L = 30, B = 18, n = pts.length;
+    var x = function (i) { return L + (n === 1 ? (W - L) / 2 : i * (W - L - 8) / (n - 1)); };
+    var y = function (v) { return 6 + (H - B - 6) * (1 - v / 100); };
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="定着率の推移">';
+    [0, 50, 100].forEach(function (v) {
+      svg += '<line x1="' + L + '" x2="' + W + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)" stroke-width="1"/>' +
+        '<text x="0" y="' + (y(v) + 4) + '" font-size="11" fill="var(--muted)">' + v + '%</text>';
+    });
+    svg += '<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke" points="' +
+      pts.map(function (r, i) { return x(i) + ',' + y(pct(r)); }).join(' ') + '"/>';
+    pts.forEach(function (r, i) { svg += '<circle cx="' + x(i) + '" cy="' + y(pct(r)) + '" r="3" fill="var(--accent)"/>'; });
+    var md = function (s) { return Number(s.slice(5, 7)) + '/' + Number(s.slice(8, 10)); };
+    svg += '<text x="' + L + '" y="' + (H - 3) + '" font-size="11" fill="var(--muted)">' + md(pts[0].study_day) + '</text>';
+    if (n > 1) svg += '<text x="' + W + '" y="' + (H - 3) + '" font-size="11" fill="var(--muted)" text-anchor="end">' + md(pts[n - 1].study_day) + '</text>';
+    box.insertAdjacentHTML('beforeend', svg + '</svg>');
+    return box;
+  }
+  function calendarBox(d) {
+    var box = h('div');
+    var map = {};
+    d.calendar.forEach(function (r) { map[r.study_day] = r; });
+    if (!calMonth) calMonth = d.today.slice(0, 7);
+    function draw() {
+      var y = Number(calMonth.slice(0, 4)), m = Number(calMonth.slice(5, 7));
+      var first = new Date(Date.UTC(y, m - 1, 1)), days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      var cells = ['日', '月', '火', '水', '木', '金', '土'].map(function (w) { return h('div', { class: 'w', text: w }); });
+      for (var k = 0; k < first.getUTCDay(); k++) cells.push(h('div', { class: 'none' }));
+      var sumCards = 0, sumSec = 0, doneDays = 0;
+      for (var day = 1; day <= days; day++) {
+        var key = calMonth + '-' + (day < 10 ? '0' : '') + day, r = map[key];
+        var cls = r && r.completed ? 'done' : r && r.cards_done ? 'did' : '';
+        if (key === d.today) cls += ' today';
+        var kids = [h('b', { text: day })];
+        if (r && r.cards_done) { kids.push(r.cards_done + '問'); kids.push(h('br')); kids.push(Math.round(r.seconds / 60) + '分'); sumCards += r.cards_done; sumSec += r.seconds; }
+        if (r && r.completed) doneDays++;
+        if (r && r.freeze_used) kids.push('🎫');
+        cells.push(h('div', { class: cls }, kids));
+      }
+      var shift = function (k) { var t = new Date(Date.UTC(y, m - 1 + k, 1)); calMonth = t.toISOString().slice(0, 7); draw(); };
+      box.replaceChildren(
+        h('div', { class: 'cal-head' }, [h('button', { class: 'chip', text: '←', onclick: function () { shift(-1); } }), h('b', { text: y + '年' + m + '月' }),
+          h('button', { class: 'chip', text: '→', onclick: function () { shift(1); } })]),
+        h('div', { class: 'cal' }, cells),
+        h('div', { class: 'pad muted', style: 'font-size:12px;margin-top:4px', text: '終えた日 ' + doneDays + '日・解いた数 ' + sumCards + '問・' + Math.round(sumSec / 60) + '分（濃い色 = 最後まで終えた日、🎫 = お休みチケット）' })
+      );
+    }
+    draw();
+    return box;
+  }
+  function groupTable(rows, head) {
+    if (!rows.length) return h('div', { class: 'empty', text: 'まだありません' });
+    return h('table', { class: 'gtable' }, [h('tr', {}, [h('th', { text: head }), h('th', { text: '問題' }), h('th', { text: '解いた' }), h('th', { text: '×' }), h('th', { text: '正答率' })])]
+      .concat(rows.map(function (r) {
+        var rate = r.reps ? Math.round(r.o / r.reps * 100) : null;
+        return h('tr', {}, [h('td', { text: r.k }), h('td', { class: 'n', text: r.items }), h('td', { class: 'n', text: r.reps }), h('td', { class: 'n ng', text: r.x }),
+          h('td', { class: 'n' }, rate === null ? ['—'] : [h('span', { class: 'rate' }, [h('i', { style: 'width:' + rate + '%' })]), rate + '%'])]);
+      })));
+  }
+  function itemList(rows, cls) {
+    if (!rows.length) return h('div', { class: 'empty', text: 'ありません' });
+    return h('div', { class: 'list' }, rows.map(function (i) {
+      return h('div', { class: 'item', style: 'cursor:default' }, [h('div', { class: 'q' }, label(i)), h('div', { class: cls, text: '×' + i.x }),
+        h('div', { class: 'meta', text: [i.subject, '答え: ' + i.answer].filter(Boolean).join('・') })]);
+    }));
+  }
+  var KINDS = { write: '漢字の書き', read: '漢字の読み', single: 'その他の問題', photo: '写真の問題' };
+  function timingTable(rows) {
+    return h('table', { class: 'gtable' }, [h('tr', {}, [h('th', { text: '種類' }), h('th', { text: '設定' }), h('th', { text: '実測' }), h('th', { text: '件数' })])]
+      .concat(rows.map(function (r) {
+        return h('tr', {}, [h('td', { text: KINDS[r.kind] || r.kind }), h('td', { class: 'n', text: r.setting + '秒' }),
+          h('td', { class: 'n', text: r.median === null ? '—' : r.median + '秒' }), h('td', { class: 'n', text: r.n })]);
+      })));
   }
 
   // 写真用データベースは無料プランで500MBまで。8割を超えたら知らせる

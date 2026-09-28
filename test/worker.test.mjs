@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import worker from '../worker/src/index.js';
-import { schedule, studyDay, addDays } from '../worker/src/logic.js';
+import { schedule, studyDay, addDays, bestStreak } from '../worker/src/logic.js';
 import { createD1 } from './d1-shim.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'worker', 'migrations');
@@ -524,4 +524,94 @@ test('一覧は登録先・単元で絞って返す／単元の一覧と重複�
   const keys = await t.api('listKeys', A);
   assert.equal(keys.length, 4);
   assert.deepEqual(keys.find((k) => k[2] === '講義'), ['A', '大学の講義を受ける', '講義', '']);
+});
+
+// ───── 漢字図鑑・ダッシュボード ─────
+
+function linkKanji(t, rows) {
+  for (const [ch, grade, ord, answer] of rows) {
+    const it = answer ? t.q('SELECT item_id FROM items WHERE answer = ?', answer)[0] : null;
+    t.env.DB.raw.prepare('INSERT INTO kanji (char, grade, ord, item_id) VALUES (?, ?, ?, ?)').run(ch, grade, ord, it ? it.item_id : '');
+  }
+}
+
+test('logic: 最長の連続日数（お休みチケットの日はつなぐが数えない）', () => {
+  assert.equal(bestStreak([]), 0);
+  assert.equal(bestStreak([
+    { study_day: '2026-10-01', completed: 1 }, { study_day: '2026-10-02', completed: 1 }, { study_day: '2026-10-03', freeze_used: 1 },
+    { study_day: '2026-10-04', completed: 1 }, { study_day: '2026-10-06', completed: 1 }, { study_day: '2026-10-07', completed: 0 }
+  ]), 3);
+});
+
+test('図鑑: 字ごとに まだ／知ってた／練習中／卒業 を返し、マスを押すと語と状態が見られる', async () => {
+  const t = setup();
+  const N = { pool: 'new', unit: '漢字1年生' };
+  await t.api('addItems', A, [kanji('一日中雨がふる', '一日', 'いちにち', N), kanji('右手をあげる', '右手', 'みぎて', N),
+    kanji('雨天のため中止', '雨天', 'うてん', N), kanji('音楽を聞く', '音楽', 'おんがく', N)]);
+  linkKanji(t, [['一', 1, 0, '一日'], ['右', 1, 1, '右手'], ['雨', 1, 2, '雨天'], ['円', 1, 3, ''], ['音', 1, 5, '音楽'], ['引', 2, 0, '']]);
+  const ch = await t.api('getChallenge', S, '漢字1年生', 10, 'mix');
+  const card = (a, d) => t.q('SELECT c.card_id FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.answer = ? AND c.direction = ?', a, d)[0].card_id;
+  assert.ok(ch.length);
+  await t.api('submitReviews', S, [rvn(card('一日', 'write'), 'o', '2026-10-01T10:00:00+09:00'), rvn(card('一日', 'read'), 'o', '2026-10-01T10:01:00+09:00'),
+    rvn(card('右手', 'write'), 'x', '2026-10-01T10:02:00+09:00')]);
+  t.env.DB.raw.prepare("UPDATE cards SET state = 'spot', stage = 6 WHERE item_id = (SELECT item_id FROM items WHERE answer = '音楽')").run();
+  const z = await t.api('getZukan', S);
+  assert.deepEqual(z.chars, [['一', 1, 'k', 0], ['右', 1, 'l', 0], ['雨', 1, 'n', 0], ['円', 1, 'n', 0], ['音', 1, 'g', 0], ['引', 2, 'n', 0]]);
+  assert.deepEqual(z.count, { n: 3, k: 1, l: 1, g: 1 });
+  assert.equal(z.total, 6);
+  assert.deepEqual(z.badges.map((b) => b.kind + b.n + ':' + b.got), ['grad10:false', 'grad50:false', 'grad100:false', 'grad300:false', 'streak7:false', 'streak30:false', 'streak100:false']);
+  const info = await t.api('getKanjiInfo', S, '右');
+  assert.equal(info.answer, '右手');
+  assert.equal(info.pool, 'mistake');
+  assert.deepEqual(info.cards.map((c) => c.direction + ':' + c.state), ['write:learning', 'read:new']);
+  const none = await t.api('getKanjiInfo', S, '円');
+  assert.equal(none.item_id, null);
+  assert.deepEqual(none.cards, []);
+  await assert.rejects(t.api('getKanjiInfo', S, '犬'), /NOT_FOUND/);
+  await assert.rejects(t.api('getKanjiInfo', S, ''), /BAD_ARGS/);
+  // 問題を削除したら「まだ」に戻る
+  await t.api('setStatus', A, info.item_id, 'deleted');
+  assert.equal((await t.api('getZukan', S)).chars[1][2], 'n');
+});
+
+test('定着率のスナップショット: その日最初の読み込みで1行だけ残し、日ごとの記録削除で取り直す', async () => {
+  const t = setup();
+  await t.api('addItems', A, [kanji('大学の講義を受ける', '講義', 'こうぎ'), kanji('試合に負ける', '負ける', 'まける')]);
+  await t.api('getToday', S);
+  assert.deepEqual(t.q('SELECT * FROM snapshots'), [{ study_day: '2026-10-01', cards_total: 2, cards_retained: 0 }]);
+  t.env.DB.raw.prepare("UPDATE cards SET state = 'spot'").run();
+  await t.api('getToday', S);
+  assert.deepEqual(t.q('SELECT cards_total, cards_retained FROM snapshots'), [{ cards_total: 2, cards_retained: 0 }]); // 1日1行のまま
+  await t.api('resetDay', A, '2026-10-01');
+  assert.equal(t.q('SELECT COUNT(*) AS n FROM snapshots')[0].n, 0);
+  t.setNow('2026-10-02T10:00:00+09:00');
+  t.env.DB.raw.prepare("UPDATE cards SET state = 'learning', stage = 4, last_result = '○' WHERE card_id IN (SELECT card_id FROM cards LIMIT 1)").run();
+  await t.api('getToday', S);
+  assert.deepEqual(t.q("SELECT cards_total, cards_retained FROM snapshots WHERE study_day = '2026-10-02'"), [{ cards_total: 2, cards_retained: 1 }]); // 1枚は定着の条件（段階4以上で直近○）、もう1枚は今日出し始めた
+});
+
+test('ダッシュボード: 理由別・科目別・改善／苦手・カレンダー・所要時間の実測', async () => {
+  const t = setup();
+  await t.api('addItems', A, [kanji('大学の講義を受ける', '講義', 'こうぎ', { reason: '知らなかった' }),
+    kanji('試合に負ける', '負ける', 'まける', { reason: 'うっかり' }),
+    { type: 'A', subject: '社会', sentence: '日本一長い川は', answer: '信濃川', reason: '知らなかった' }]);
+  const card = (a) => t.q('SELECT c.card_id FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.answer = ?', a)[0].card_id;
+  const ins = t.env.DB.raw.prepare("INSERT INTO reviews (review_id, card_id, answered_at, study_day, result, duration_sec, stage_before, stage_after) VALUES (?, ?, ?, ?, ?, ?, 0, 0)");
+  let n = 0;
+  const hist = (a, marks, sec) => marks.split('').forEach((m, k) => ins.run('d' + (++n), card(a), '2026-09-2' + k + 'T10:00:00Z', '2026-09-2' + k, m, sec));
+  hist('講義', '××○○○', 20);       // 改善
+  hist('負ける', '×○××', 30);       // 苦手
+  hist('信濃川', '○', 10);
+  t.env.DB.raw.prepare("INSERT INTO days (study_day, completed, cards_done, seconds) VALUES ('2026-09-30', 1, 5, 240)").run();
+  t.env.DB.raw.prepare("INSERT INTO snapshots VALUES ('2026-09-30', 4, 1)").run();
+  const d = await t.api('getDashboard', A);
+  assert.deepEqual(d.byReason.map((r) => [r.k, r.items, r.reps, r.x, r.o]), [['知らなかった', 2, 6, 2, 4], ['うっかり', 1, 4, 3, 1]]);
+  assert.deepEqual(d.bySubject.map((r) => [r.k, r.items]), [['国語', 2], ['社会', 1]]);
+  assert.deepEqual(d.improved.map((r) => r.answer + r.x), ['講義2']);
+  assert.deepEqual(d.weak.map((r) => r.answer + r.x), ['負ける3']);
+  assert.deepEqual(d.calendar, [{ study_day: '2026-09-30', completed: 1, cards_done: 5, seconds: 240, freeze_used: 0 }]);
+  assert.deepEqual(d.trend, [{ study_day: '2026-09-30', cards_total: 4, cards_retained: 1 }]);
+  assert.deepEqual(d.timing.find((x) => x.kind === 'write'), { kind: 'write', n: 9, median: 20, setting: 20 });
+  assert.deepEqual(d.timing.find((x) => x.kind === 'single'), { kind: 'single', n: 1, median: 10, setting: 15 });
+  await assert.rejects(t.api('getDashboard', S), /./); // 親だけ
 });

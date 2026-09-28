@@ -120,6 +120,20 @@ export function streak(dayRows, today, st) {
   };
 }
 
+// これまでで最長の連続日数（図鑑のバッジ用）。終えた日とお休みチケットの日はつながり、終えた日だけを数える
+export function bestStreak(dayRows) {
+  const kept = {};
+  for (const r of dayRows) if (r.completed || r.freeze_used) kept[r.study_day] = !!r.completed;
+  let best = 0, run = 0, prev = '';
+  for (const d of Object.keys(kept).sort()) {
+    if (!prev || addDays(prev, 1) !== d) run = 0;
+    if (kept[d]) run++;
+    best = Math.max(best, run);
+    prev = d;
+  }
+  return best;
+}
+
 const HIRAGANA = /^[ぁ-ゟー]+$/;
 const KANA = /^[ぁ-ゟァ-ヿー]+$/;
 export const ITEM_FIELDS = ['type', 'subject', 'unit', 'sentence', 'answer', 'reading', 'prompt_form', 'explanation',
