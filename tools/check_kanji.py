@@ -93,12 +93,12 @@ def main():
         okuri = re.sub(r'^.*[一-鿿]', '', a)
         if okuri and not pf:
             err.append('送り仮名がある語に出題表記がない')
+        # 例文・答えのほかの漢字は、小学校で習う1026字ならどの学年でもよい（2026-09-28 方針変更）。それ以外はひらがなにする
         for k in KANJI_RE.findall(s):
-            kg = grade_of.get(k)
-            if kg is None:
-                err.append(f'配当表にない字「{k}」')
-            elif kg > g:
-                err.append(f'上の学年の字「{k}」（{kg}年）')
+            if k not in grade_of:
+                err.append(f'小学校で習わない字「{k}」')
+        if len(a) < 2:
+            err.append('答えが1文字（語にする）')
         if len(s) > 20:
             err.append(f'例文が長い（{len(s)}字）')
         if c in seen_char:
@@ -133,12 +133,12 @@ def main():
 
     if args.report:
         kata = lambda s: ''.join(chr(ord(ch) + 0x60) if 'ぁ' <= ch <= 'ゖ' else ch for ch in s)
-        lines = ['| # | 字 | 出題（娘さんの画面） | 答え | 読み | 自動チェック |', '|---|---|---|---|---|---|']
+        lines = ['| # | 字 | 出題（子どもの画面） | 答え | 読み | 意味（答えの画面に表示） | 自動チェック |', '|---|---|---|---|---|---|---|']
         for i, x in enumerate(shown, 1):
             pf = x.get('prompt_form') or kata(x['reading'])
             q = x['sentence'].replace(x['answer'], '**' + pf + '**', 1)
             chk = ' / '.join(x['errors'] + x['review']) or '✓'
-            lines.append(f"| {i} | {x['char']} | {q} | {x['answer']} | {x['reading']} | {chk} |")
+            lines.append(f"| {i} | {x['char']} | {q} | {x['answer']} | {x['reading']} | {x.get('meaning', '')} | {chk} |")
         Path(args.report).write_text('\n'.join(lines) + '\n', encoding='utf-8')
     return 1 if n_err else 0
 
