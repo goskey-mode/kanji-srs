@@ -55,7 +55,8 @@ def main():
             err.append('答えが「字＋送り仮名」の形ではない')
         if not HIRA_RE.match(r):
             err.append('読みがひらがなではない')
-        elif r not in kun.get(c, []):
+        # 表の訓が語幹だけの字もある（異＝こと → 異なる）。そのときは「表の訓＋送り仮名」も認める
+        elif r not in kun.get(c, []) and not (okuri and any(r == k + okuri for k in kun.get(c, []))):
             err.append(f'小学校で習う訓ではない（小学校の訓: {"・".join(kun.get(c, [])) or "なし"}）')
         elif okuri and not r.endswith(okuri):
             err.append('送り仮名と読みが合わない')

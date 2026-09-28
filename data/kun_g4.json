@@ -1,0 +1,1028 @@
+[
+ {
+  "char": "位",
+  "grade": 4,
+  "answer": "位",
+  "reading": "くらい",
+  "sentence": "百の位の数を答える",
+  "prompt_form": "クライ",
+  "meaning": "数のけた"
+ },
+ {
+  "char": "印",
+  "grade": 4,
+  "answer": "印",
+  "reading": "しるし",
+  "sentence": "大事な所に印をつける",
+  "prompt_form": "シルシ",
+  "meaning": "目じるし"
+ },
+ {
+  "char": "栄",
+  "grade": 4,
+  "answer": "栄える",
+  "reading": "さかえる",
+  "sentence": "港のまわりに町が栄える",
+  "prompt_form": "サカえる",
+  "meaning": "いきおいがさかんになる"
+ },
+ {
+  "char": "塩",
+  "grade": 4,
+  "answer": "塩",
+  "reading": "しお",
+  "sentence": "料理に塩を少し入れる",
+  "prompt_form": "シオ",
+  "meaning": "海の水などからとる、しおからい調味料"
+ },
+ {
+  "char": "加",
+  "grade": 4,
+  "answer": "加える",
+  "reading": "くわえる",
+  "sentence": "スープに水を加える",
+  "prompt_form": "クワえる",
+  "meaning": "たす。つけくわえる"
+ },
+ {
+  "char": "果",
+  "grade": 4,
+  "answer": "果たす",
+  "reading": "はたす",
+  "sentence": "自分の役目を果たす",
+  "prompt_form": "ハたす",
+  "meaning": "やりとげる"
+ },
+ {
+  "char": "芽",
+  "grade": 4,
+  "answer": "芽",
+  "reading": "め",
+  "sentence": "種から芽が出る",
+  "prompt_form": "メ",
+  "meaning": "植物の、これから育つ部分"
+ },
+ {
+  "char": "改",
+  "grade": 4,
+  "answer": "改める",
+  "reading": "あらためる",
+  "sentence": "悪い習慣を改める",
+  "prompt_form": "アラタめる",
+  "meaning": "新しくする。直す"
+ },
+ {
+  "char": "街",
+  "grade": 4,
+  "answer": "街",
+  "reading": "まち",
+  "sentence": "夜の街に明かりがともる",
+  "prompt_form": "マチ",
+  "meaning": "店や家が立ちならぶにぎやかな所"
+ },
+ {
+  "char": "覚",
+  "grade": 4,
+  "answer": "覚める",
+  "reading": "さめる",
+  "sentence": "朝早く目が覚める",
+  "prompt_form": "サめる",
+  "meaning": "ねむりから起きる"
+ },
+ {
+  "char": "潟",
+  "grade": 4,
+  "answer": "潟",
+  "reading": "かた",
+  "sentence": "潟には多くの鳥がやって来る",
+  "prompt_form": "カタ",
+  "meaning": "海の一部が砂などでしきられてできた湖や、しおが引くと現れる浅い所"
+ },
+ {
+  "char": "管",
+  "grade": 4,
+  "answer": "管",
+  "reading": "くだ",
+  "sentence": "管を通して水を流す",
+  "prompt_form": "クダ",
+  "meaning": "中が空になっている、細長いつつ"
+ },
+ {
+  "char": "関",
+  "grade": 4,
+  "answer": "関わる",
+  "reading": "かかわる",
+  "sentence": "命に関わる大事なこと",
+  "prompt_form": "カカわる",
+  "meaning": "関係する"
+ },
+ {
+  "char": "願",
+  "grade": 4,
+  "answer": "願う",
+  "reading": "ねがう",
+  "sentence": "みんなの幸せを願う",
+  "prompt_form": "ネガう",
+  "meaning": "こうなってほしいと思う"
+ },
+ {
+  "char": "旗",
+  "grade": 4,
+  "answer": "旗",
+  "reading": "はた",
+  "sentence": "運動会で旗をふる",
+  "prompt_form": "ハタ",
+  "meaning": "布に色やしるしをつけて、さおにつけたもの"
+ },
+ {
+  "char": "求",
+  "grade": 4,
+  "answer": "求める",
+  "reading": "もとめる",
+  "sentence": "助けを求める",
+  "prompt_form": "モトめる",
+  "meaning": "ほしいと願う。さがす"
+ },
+ {
+  "char": "泣",
+  "grade": 4,
+  "answer": "泣く",
+  "reading": "なく",
+  "sentence": "赤ちゃんが大きな声で泣く",
+  "prompt_form": "ナく",
+  "meaning": "なみだを流す"
+ },
+ {
+  "char": "挙",
+  "grade": 4,
+  "answer": "挙げる",
+  "reading": "あげる",
+  "sentence": "わかりやすい例を挙げる",
+  "prompt_form": "アげる",
+  "meaning": "はっきりしめす。ならべて出す"
+ },
+ {
+  "char": "共",
+  "grade": 4,
+  "answer": "共",
+  "reading": "とも",
+  "sentence": "家族と共に旅行する",
+  "prompt_form": "トモ",
+  "meaning": "いっしょに"
+ },
+ {
+  "char": "鏡",
+  "grade": 4,
+  "answer": "鏡",
+  "reading": "かがみ",
+  "sentence": "鏡で顔を見る",
+  "prompt_form": "カガミ",
+  "meaning": "すがたをうつして見る道具"
+ },
+ {
+  "char": "熊",
+  "grade": 4,
+  "answer": "熊",
+  "reading": "くま",
+  "sentence": "山で熊を見かけた",
+  "prompt_form": "クマ",
+  "meaning": "体が大きく、力の強い動物"
+ },
+ {
+  "char": "群",
+  "grade": 4,
+  "answer": "群れ",
+  "reading": "むれ",
+  "sentence": "羊の群れが草を食べる",
+  "prompt_form": "ムれ",
+  "meaning": "たくさん集まっているもの"
+ },
+ {
+  "char": "欠",
+  "grade": 4,
+  "answer": "欠ける",
+  "reading": "かける",
+  "sentence": "茶わんのふちが欠ける",
+  "prompt_form": "カける",
+  "meaning": "一部がこわれてなくなる"
+ },
+ {
+  "char": "結",
+  "grade": 4,
+  "answer": "結ぶ",
+  "reading": "むすぶ",
+  "sentence": "くつのひもを結ぶ",
+  "prompt_form": "ムスぶ",
+  "meaning": "ひもなどをつなぎ合わせる"
+ },
+ {
+  "char": "建",
+  "grade": 4,
+  "answer": "建てる",
+  "reading": "たてる",
+  "sentence": "新しい家を建てる",
+  "prompt_form": "タてる",
+  "meaning": "建物を作る"
+ },
+ {
+  "char": "固",
+  "grade": 4,
+  "answer": "固める",
+  "reading": "かためる",
+  "sentence": "雪をぎゅっと固める",
+  "prompt_form": "カタめる",
+  "meaning": "かたくする"
+ },
+ {
+  "char": "好",
+  "grade": 4,
+  "answer": "好む",
+  "reading": "このむ",
+  "sentence": "父はあまいものを好む",
+  "prompt_form": "コノむ",
+  "meaning": "すきだと思う"
+ },
+ {
+  "char": "香",
+  "grade": 4,
+  "answer": "香る",
+  "reading": "かおる",
+  "sentence": "庭の花が香る",
+  "prompt_form": "カオる",
+  "meaning": "よいにおいがする"
+ },
+ {
+  "char": "差",
+  "grade": 4,
+  "answer": "差す",
+  "reading": "さす",
+  "sentence": "雨がふってきたのでかさを差す",
+  "prompt_form": "サす",
+  "meaning": "かさを開いて持つ"
+ },
+ {
+  "char": "菜",
+  "grade": 4,
+  "answer": "菜",
+  "reading": "な",
+  "sentence": "菜の花が一面にさく",
+  "prompt_form": "ナ",
+  "meaning": "葉やくきを食べる野菜"
+ },
+ {
+  "char": "最",
+  "grade": 4,
+  "answer": "最も",
+  "reading": "もっとも",
+  "sentence": "日本で最も高い山",
+  "prompt_form": "モットも",
+  "meaning": "いちばん"
+ },
+ {
+  "char": "崎",
+  "grade": 4,
+  "answer": "崎",
+  "reading": "さき",
+  "sentence": "長崎は坂の多い町だ",
+  "prompt_form": "サキ",
+  "meaning": "海につき出た陸地のはし（地名に使う）"
+ },
+ {
+  "char": "札",
+  "grade": 4,
+  "answer": "札",
+  "reading": "ふだ",
+  "sentence": "かばんに名札をつける",
+  "prompt_form": "フダ",
+  "meaning": "名前などを書いてしるしにする紙や板"
+ },
+ {
+  "char": "刷",
+  "grade": 4,
+  "answer": "刷る",
+  "reading": "する",
+  "sentence": "学級新聞を刷る",
+  "prompt_form": "スる",
+  "meaning": "印刷する"
+ },
+ {
+  "char": "参",
+  "grade": 4,
+  "answer": "参る",
+  "reading": "まいる",
+  "sentence": "お墓に参る",
+  "prompt_form": "マイる",
+  "meaning": "神社やお墓などへおがみに行く"
+ },
+ {
+  "char": "産",
+  "grade": 4,
+  "answer": "産む",
+  "reading": "うむ",
+  "sentence": "にわとりが卵を産む",
+  "prompt_form": "ウむ",
+  "meaning": "子や卵を体の外に出す"
+ },
+ {
+  "char": "散",
+  "grade": 4,
+  "answer": "散らかる",
+  "reading": "ちらかる",
+  "sentence": "部屋におもちゃが散らかる",
+  "prompt_form": "チらかる",
+  "meaning": "物があちこちに、ばらばらになる"
+ },
+ {
+  "char": "残",
+  "grade": 4,
+  "answer": "残す",
+  "reading": "のこす",
+  "sentence": "きらいなおかずを残す",
+  "prompt_form": "ノコす",
+  "meaning": "あとにとどめておく"
+ },
+ {
+  "char": "試",
+  "grade": 4,
+  "answer": "試みる",
+  "reading": "こころみる",
+  "sentence": "新しい方法を試みる",
+  "prompt_form": "ココロみる",
+  "meaning": "ためしにやってみる"
+ },
+ {
+  "char": "治",
+  "grade": 4,
+  "answer": "治める",
+  "reading": "おさめる",
+  "sentence": "昔、王が国を治める",
+  "prompt_form": "オサめる",
+  "meaning": "国などをまとめて、しずかにする"
+ },
+ {
+  "char": "鹿",
+  "grade": 4,
+  "answer": "鹿",
+  "reading": "しか",
+  "sentence": "奈良公園で鹿にえさをやる",
+  "prompt_form": "シカ",
+  "meaning": "おすに角がある、草を食べる動物"
+ },
+ {
+  "char": "失",
+  "grade": 4,
+  "answer": "失う",
+  "reading": "うしなう",
+  "sentence": "自信を失う",
+  "prompt_form": "ウシナう",
+  "meaning": "なくす"
+ },
+ {
+  "char": "借",
+  "grade": 4,
+  "answer": "借りる",
+  "reading": "かりる",
+  "sentence": "友だちに消しゴムを借りる",
+  "prompt_form": "カりる",
+  "meaning": "人の物を、後で返すやくそくで使う"
+ },
+ {
+  "char": "種",
+  "grade": 4,
+  "answer": "種",
+  "reading": "たね",
+  "sentence": "畑にひまわりの種をまく",
+  "prompt_form": "タネ",
+  "meaning": "植物が育つもとになるもの"
+ },
+ {
+  "char": "周",
+  "grade": 4,
+  "answer": "周り",
+  "reading": "まわり",
+  "sentence": "池の周りを歩く",
+  "prompt_form": "マワり",
+  "meaning": "もののまわり。ふち"
+ },
+ {
+  "char": "祝",
+  "grade": 4,
+  "answer": "祝う",
+  "reading": "いわう",
+  "sentence": "みんなで誕生日を祝う",
+  "prompt_form": "イワう",
+  "meaning": "めでたいことをよろこぶ"
+ },
+ {
+  "char": "初",
+  "grade": 4,
+  "answer": "初めて",
+  "reading": "はじめて",
+  "sentence": "初めて一人で電車に乗る",
+  "prompt_form": "ハジめて",
+  "meaning": "それまでに一度もなく"
+ },
+ {
+  "char": "松",
+  "grade": 4,
+  "answer": "松",
+  "reading": "まつ",
+  "sentence": "海岸に松の木がならぶ",
+  "prompt_form": "マツ",
+  "meaning": "葉が針のように細い、一年中緑の木"
+ },
+ {
+  "char": "笑",
+  "grade": 4,
+  "answer": "笑う",
+  "reading": "わらう",
+  "sentence": "おもしろい話に笑う",
+  "prompt_form": "ワラう",
+  "meaning": "楽しくて声を出したり顔をほころばせたりする"
+ },
+ {
+  "char": "唱",
+  "grade": 4,
+  "answer": "唱える",
+  "reading": "となえる",
+  "sentence": "お寺で念仏を唱える",
+  "prompt_form": "トナえる",
+  "meaning": "声に出して言う"
+ },
+ {
+  "char": "焼",
+  "grade": 4,
+  "answer": "焼ける",
+  "reading": "やける",
+  "sentence": "パンがこんがり焼ける",
+  "prompt_form": "ヤける",
+  "meaning": "火などで熱が通る"
+ },
+ {
+  "char": "照",
+  "grade": 4,
+  "answer": "照らす",
+  "reading": "てらす",
+  "sentence": "月が夜道を照らす",
+  "prompt_form": "テらす",
+  "meaning": "光を当てて明るくする"
+ },
+ {
+  "char": "城",
+  "grade": 4,
+  "answer": "城",
+  "reading": "しろ",
+  "sentence": "お城の天守閣を見上げる",
+  "prompt_form": "シロ",
+  "meaning": "昔、とのさまが住み、敵を防いだ建物"
+ },
+ {
+  "char": "縄",
+  "grade": 4,
+  "answer": "縄",
+  "reading": "なわ",
+  "sentence": "荷物を縄でしばる",
+  "prompt_form": "ナワ",
+  "meaning": "わらなどをより合わせた太いひも"
+ },
+ {
+  "char": "井",
+  "grade": 4,
+  "answer": "井",
+  "reading": "い",
+  "sentence": "井戸の水をくむ",
+  "prompt_form": "イ",
+  "meaning": "水をくむための穴（井戸）"
+ },
+ {
+  "char": "成",
+  "grade": 4,
+  "answer": "成す",
+  "reading": "なす",
+  "sentence": "水鳥が群れを成す",
+  "prompt_form": "ナす",
+  "meaning": "形を作り上げる"
+ },
+ {
+  "char": "省",
+  "grade": 4,
+  "answer": "省く",
+  "reading": "はぶく",
+  "sentence": "むだな手間を省く",
+  "prompt_form": "ハブく",
+  "meaning": "へらす。取りのぞく"
+ },
+ {
+  "char": "清",
+  "grade": 4,
+  "answer": "清い",
+  "reading": "きよい",
+  "sentence": "山から清い水がわく",
+  "prompt_form": "キヨい",
+  "meaning": "すんでいて、よごれがない"
+ },
+ {
+  "char": "静",
+  "grade": 4,
+  "answer": "静か",
+  "reading": "しずか",
+  "sentence": "図書館では静かにする",
+  "prompt_form": "シズか",
+  "meaning": "音がしない"
+ },
+ {
+  "char": "積",
+  "grade": 4,
+  "answer": "積もる",
+  "reading": "つもる",
+  "sentence": "雪が一メートルも積もる",
+  "prompt_form": "ツもる",
+  "meaning": "物が重なって高くなる"
+ },
+ {
+  "char": "折",
+  "grade": 4,
+  "answer": "折れる",
+  "reading": "おれる",
+  "sentence": "強い風で木のえだが折れる",
+  "prompt_form": "オれる",
+  "meaning": "曲がってはなれる"
+ },
+ {
+  "char": "節",
+  "grade": 4,
+  "answer": "節",
+  "reading": "ふし",
+  "sentence": "竹の節を数える",
+  "prompt_form": "フシ",
+  "meaning": "竹などの、くきのつなぎ目"
+ },
+ {
+  "char": "説",
+  "grade": 4,
+  "answer": "説く",
+  "reading": "とく",
+  "sentence": "先生が命の大切さを説く",
+  "prompt_form": "トく",
+  "meaning": "よくわかるように話す"
+ },
+ {
+  "char": "浅",
+  "grade": 4,
+  "answer": "浅い",
+  "reading": "あさい",
+  "sentence": "この川は浅い",
+  "prompt_form": "アサい",
+  "meaning": "底までが近い。深いの反対"
+ },
+ {
+  "char": "戦",
+  "grade": 4,
+  "answer": "戦う",
+  "reading": "たたかう",
+  "sentence": "強いチームと戦う",
+  "prompt_form": "タタカう",
+  "meaning": "相手に勝とうと争う"
+ },
+ {
+  "char": "選",
+  "grade": 4,
+  "answer": "選ぶ",
+  "reading": "えらぶ",
+  "sentence": "好きな色を選ぶ",
+  "prompt_form": "エラぶ",
+  "meaning": "いくつかの中から決める"
+ },
+ {
+  "char": "争",
+  "grade": 4,
+  "answer": "争う",
+  "reading": "あらそう",
+  "sentence": "一位を争う",
+  "prompt_form": "アラソう",
+  "meaning": "勝ち負けをきそう"
+ },
+ {
+  "char": "倉",
+  "grade": 4,
+  "answer": "倉",
+  "reading": "くら",
+  "sentence": "米を倉にしまう",
+  "prompt_form": "クラ",
+  "meaning": "大切な物をしまっておく建物"
+ },
+ {
+  "char": "巣",
+  "grade": 4,
+  "answer": "巣",
+  "reading": "す",
+  "sentence": "木の上に鳥の巣がある",
+  "prompt_form": "ス",
+  "meaning": "鳥や虫などのすみか"
+ },
+ {
+  "char": "束",
+  "grade": 4,
+  "answer": "束",
+  "reading": "たば",
+  "sentence": "花の束をおくる",
+  "prompt_form": "タバ",
+  "meaning": "ひとまとめにしたもの"
+ },
+ {
+  "char": "側",
+  "grade": 4,
+  "answer": "側",
+  "reading": "がわ",
+  "sentence": "道の右側を歩く",
+  "prompt_form": "ガワ",
+  "meaning": "一方の方"
+ },
+ {
+  "char": "続",
+  "grade": 4,
+  "answer": "続ける",
+  "reading": "つづける",
+  "sentence": "毎日日記を書き続ける",
+  "prompt_form": "ツヅける",
+  "meaning": "とぎれないようにする"
+ },
+ {
+  "char": "孫",
+  "grade": 4,
+  "answer": "孫",
+  "reading": "まご",
+  "sentence": "祖父が孫をかわいがる",
+  "prompt_form": "マゴ",
+  "meaning": "子の子"
+ },
+ {
+  "char": "帯",
+  "grade": 4,
+  "answer": "帯",
+  "reading": "おび",
+  "sentence": "着物の帯をしめる",
+  "prompt_form": "オビ",
+  "meaning": "着物の上から、こしにまく細長い布"
+ },
+ {
+  "char": "置",
+  "grade": 4,
+  "answer": "置く",
+  "reading": "おく",
+  "sentence": "つくえの上に本を置く",
+  "prompt_form": "オく",
+  "meaning": "物をある所にすえる"
+ },
+ {
+  "char": "仲",
+  "grade": 4,
+  "answer": "仲",
+  "reading": "なか",
+  "sentence": "二人はとても仲がよい",
+  "prompt_form": "ナカ",
+  "meaning": "人と人との間がら"
+ },
+ {
+  "char": "沖",
+  "grade": 4,
+  "answer": "沖",
+  "reading": "おき",
+  "sentence": "沖に船が見える",
+  "prompt_form": "オキ",
+  "meaning": "海や湖の、岸から遠くはなれた所"
+ },
+ {
+  "char": "低",
+  "grade": 4,
+  "answer": "低い",
+  "reading": "ひくい",
+  "sentence": "低い声で話す",
+  "prompt_form": "ヒクい",
+  "meaning": "高さや音が下の方にある。高いの反対"
+ },
+ {
+  "char": "底",
+  "grade": 4,
+  "answer": "底",
+  "reading": "そこ",
+  "sentence": "池の底に石がしずむ",
+  "prompt_form": "ソコ",
+  "meaning": "入れ物や川、海などのいちばん下"
+ },
+ {
+  "char": "的",
+  "grade": 4,
+  "answer": "的",
+  "reading": "まと",
+  "sentence": "矢が的に当たる",
+  "prompt_form": "マト",
+  "meaning": "矢やたまを当てるための目当て"
+ },
+ {
+  "char": "伝",
+  "grade": 4,
+  "answer": "伝える",
+  "reading": "つたえる",
+  "sentence": "先生からの話を家族に伝える",
+  "prompt_form": "ツタえる",
+  "meaning": "知らせる"
+ },
+ {
+  "char": "努",
+  "grade": 4,
+  "answer": "努める",
+  "reading": "つとめる",
+  "sentence": "問題の解決に努める",
+  "prompt_form": "ツトめる",
+  "meaning": "力をつくす"
+ },
+ {
+  "char": "働",
+  "grade": 4,
+  "answer": "働く",
+  "reading": "はたらく",
+  "sentence": "父は駅の近くで働く",
+  "prompt_form": "ハタラく",
+  "meaning": "仕事をする"
+ },
+ {
+  "char": "梨",
+  "grade": 4,
+  "answer": "梨",
+  "reading": "なし",
+  "sentence": "秋においしい梨をむく",
+  "prompt_form": "ナシ",
+  "meaning": "秋にとれる、水分の多い丸い果物"
+ },
+ {
+  "char": "熱",
+  "grade": 4,
+  "answer": "熱い",
+  "reading": "あつい",
+  "sentence": "熱いお茶を飲む",
+  "prompt_form": "アツい",
+  "meaning": "（物の）温度が高い"
+ },
+ {
+  "char": "敗",
+  "grade": 4,
+  "answer": "敗れる",
+  "reading": "やぶれる",
+  "sentence": "決勝戦で敗れる",
+  "prompt_form": "ヤブれる",
+  "meaning": "試合に負ける"
+ },
+ {
+  "char": "梅",
+  "grade": 4,
+  "answer": "梅",
+  "reading": "うめ",
+  "sentence": "庭の梅の花がさく",
+  "prompt_form": "ウメ",
+  "meaning": "春のはじめに花がさく木。実は梅ぼしになる"
+ },
+ {
+  "char": "飯",
+  "grade": 4,
+  "answer": "飯",
+  "reading": "めし",
+  "sentence": "昼飯をいっしょに食べる",
+  "prompt_form": "メシ",
+  "meaning": "ご飯。食事"
+ },
+ {
+  "char": "飛",
+  "grade": 4,
+  "answer": "飛ばす",
+  "reading": "とばす",
+  "sentence": "紙飛行機を遠くまで飛ばす",
+  "prompt_form": "トばす",
+  "meaning": "空中を進ませる"
+ },
+ {
+  "char": "必",
+  "grade": 4,
+  "answer": "必ず",
+  "reading": "かならず",
+  "sentence": "約束は必ず守る",
+  "prompt_form": "カナラず",
+  "meaning": "まちがいなく。きっと"
+ },
+ {
+  "char": "夫",
+  "grade": 4,
+  "answer": "夫",
+  "reading": "おっと",
+  "sentence": "おばの夫は医者だ",
+  "prompt_form": "オット",
+  "meaning": "結婚している男の人（妻から見た言い方）"
+ },
+ {
+  "char": "付",
+  "grade": 4,
+  "answer": "付ける",
+  "reading": "つける",
+  "sentence": "服に名前を付ける",
+  "prompt_form": "ツける",
+  "meaning": "くっつける"
+ },
+ {
+  "char": "富",
+  "grade": 4,
+  "answer": "富む",
+  "reading": "とむ",
+  "sentence": "この町は自然に富む",
+  "prompt_form": "トむ",
+  "meaning": "たくさんある。ゆたかである"
+ },
+ {
+  "char": "別",
+  "grade": 4,
+  "answer": "別れる",
+  "reading": "わかれる",
+  "sentence": "駅で友だちと別れる",
+  "prompt_form": "ワカれる",
+  "meaning": "いっしょにいた人とはなれる"
+ },
+ {
+  "char": "辺",
+  "grade": 4,
+  "answer": "辺り",
+  "reading": "あたり",
+  "sentence": "この辺りはとても静かだ",
+  "prompt_form": "アタり",
+  "meaning": "そのまわり。近く"
+ },
+ {
+  "char": "変",
+  "grade": 4,
+  "answer": "変わる",
+  "reading": "かわる",
+  "sentence": "信号が青に変わる",
+  "prompt_form": "カわる",
+  "meaning": "前とちがうようすになる"
+ },
+ {
+  "char": "便",
+  "grade": 4,
+  "answer": "便り",
+  "reading": "たより",
+  "sentence": "遠くの友から便りがとどく",
+  "prompt_form": "タヨり",
+  "meaning": "手紙。知らせ"
+ },
+ {
+  "char": "包",
+  "grade": 4,
+  "answer": "包む",
+  "reading": "つつむ",
+  "sentence": "プレゼントを紙で包む",
+  "prompt_form": "ツツむ",
+  "meaning": "物を中に入れて、外側をおおう"
+ },
+ {
+  "char": "望",
+  "grade": 4,
+  "answer": "望む",
+  "reading": "のぞむ",
+  "sentence": "平和な世界を望む",
+  "prompt_form": "ノゾむ",
+  "meaning": "そうなってほしいと願う"
+ },
+ {
+  "char": "末",
+  "grade": 4,
+  "answer": "末",
+  "reading": "すえ",
+  "sentence": "三月の末に引っこす",
+  "prompt_form": "スエ",
+  "meaning": "終わりのころ"
+ },
+ {
+  "char": "満",
+  "grade": 4,
+  "answer": "満たす",
+  "reading": "みたす",
+  "sentence": "バケツを水で満たす",
+  "prompt_form": "ミたす",
+  "meaning": "いっぱいにする"
+ },
+ {
+  "char": "無",
+  "grade": 4,
+  "answer": "無い",
+  "reading": "ない",
+  "sentence": "時間が無いので急ぐ",
+  "prompt_form": "ナい",
+  "meaning": "そこにない。存在しない"
+ },
+ {
+  "char": "勇",
+  "grade": 4,
+  "answer": "勇む",
+  "reading": "いさむ",
+  "sentence": "初めての試合に心が勇む",
+  "prompt_form": "イサむ",
+  "meaning": "元気よく、はりきる"
+ },
+ {
+  "char": "要",
+  "grade": 4,
+  "answer": "要",
+  "reading": "かなめ",
+  "sentence": "かれはチームの要だ",
+  "prompt_form": "カナメ",
+  "meaning": "いちばん大切なところ"
+ },
+ {
+  "char": "養",
+  "grade": 4,
+  "answer": "養う",
+  "reading": "やしなう",
+  "sentence": "体力を養う",
+  "prompt_form": "ヤシナう",
+  "meaning": "力を育てる。食べさせてそだてる"
+ },
+ {
+  "char": "浴",
+  "grade": 4,
+  "answer": "浴びる",
+  "reading": "あびる",
+  "sentence": "走った後にシャワーを浴びる",
+  "prompt_form": "アびる",
+  "meaning": "水などを体にかける"
+ },
+ {
+  "char": "良",
+  "grade": 4,
+  "answer": "良い",
+  "reading": "よい",
+  "sentence": "気持ちの良い朝だ",
+  "prompt_form": "ヨい",
+  "meaning": "すぐれている。このましい"
+ },
+ {
+  "char": "量",
+  "grade": 4,
+  "answer": "量る",
+  "reading": "はかる",
+  "sentence": "体重計で体重を量る",
+  "prompt_form": "ハカる",
+  "meaning": "重さや量をしらべる"
+ },
+ {
+  "char": "輪",
+  "grade": 4,
+  "answer": "輪",
+  "reading": "わ",
+  "sentence": "みんなで輪になっておどる",
+  "prompt_form": "ワ",
+  "meaning": "丸い形のもの"
+ },
+ {
+  "char": "類",
+  "grade": 4,
+  "answer": "類",
+  "reading": "たぐい",
+  "sentence": "この類の本はよく読む",
+  "prompt_form": "タグイ",
+  "meaning": "同じなかま"
+ },
+ {
+  "char": "冷",
+  "grade": 4,
+  "answer": "冷める",
+  "reading": "さめる",
+  "sentence": "スープが冷める",
+  "prompt_form": "サめる",
+  "meaning": "熱いものが、ぬるくなる"
+ },
+ {
+  "char": "例",
+  "grade": 4,
+  "answer": "例える",
+  "reading": "たとえる",
+  "sentence": "人生を旅に例える",
+  "prompt_form": "タトえる",
+  "meaning": "ほかのものに見立てて言う"
+ },
+ {
+  "char": "連",
+  "grade": 4,
+  "answer": "連なる",
+  "reading": "つらなる",
+  "sentence": "遠くに山々が連なる",
+  "prompt_form": "ツラなる",
+  "meaning": "長くならんで続く"
+ },
+ {
+  "char": "老",
+  "grade": 4,
+  "answer": "老いる",
+  "reading": "おいる",
+  "sentence": "人はだれでも老いる",
+  "prompt_form": "オいる",
+  "meaning": "年をとる"
+ }
+]

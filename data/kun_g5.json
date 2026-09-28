@@ -1,0 +1,821 @@
+[
+ {
+  "char": "囲",
+  "grade": 5,
+  "answer": "囲む",
+  "reading": "かこむ",
+  "sentence": "家族でテーブルを囲む",
+  "prompt_form": "カコむ",
+  "meaning": "まわりをとりまく"
+ },
+ {
+  "char": "移",
+  "grade": 5,
+  "answer": "移す",
+  "reading": "うつす",
+  "sentence": "植木ばちを日なたに移す",
+  "prompt_form": "ウツす",
+  "meaning": "ほかの場所へ動かす"
+ },
+ {
+  "char": "永",
+  "grade": 5,
+  "answer": "永い",
+  "reading": "ながい",
+  "sentence": "永い年月がたつ",
+  "prompt_form": "ナガい",
+  "meaning": "いつまでも続く（時間について使う）"
+ },
+ {
+  "char": "営",
+  "grade": 5,
+  "answer": "営む",
+  "reading": "いとなむ",
+  "sentence": "祖父は町でパン屋を営む",
+  "prompt_form": "イトナむ",
+  "meaning": "仕事として行う"
+ },
+ {
+  "char": "易",
+  "grade": 5,
+  "answer": "易しい",
+  "reading": "やさしい",
+  "sentence": "易しい問題から解く",
+  "prompt_form": "ヤサしい",
+  "meaning": "かんたんだ。むずかしいの反対"
+ },
+ {
+  "char": "応",
+  "grade": 5,
+  "answer": "応える",
+  "reading": "こたえる",
+  "sentence": "家族の期待に応える",
+  "prompt_form": "コタえる",
+  "meaning": "人の気持ちや願いにそうようにする"
+ },
+ {
+  "char": "桜",
+  "grade": 5,
+  "answer": "桜",
+  "reading": "さくら",
+  "sentence": "校庭の桜がまんかいだ",
+  "prompt_form": "サクラ",
+  "meaning": "春にうすもも色の花がさく木"
+ },
+ {
+  "char": "仮",
+  "grade": 5,
+  "answer": "仮",
+  "reading": "かり",
+  "sentence": "仮の名前で登録する",
+  "prompt_form": "カリ",
+  "meaning": "まにあわせに、しばらくのあいだ"
+ },
+ {
+  "char": "河",
+  "grade": 5,
+  "answer": "河",
+  "reading": "かわ",
+  "sentence": "大きな河をわたる",
+  "prompt_form": "カワ",
+  "meaning": "大きな川"
+ },
+ {
+  "char": "過",
+  "grade": 5,
+  "answer": "過ごす",
+  "reading": "すごす",
+  "sentence": "夏休みを楽しく過ごす",
+  "prompt_form": "スごす",
+  "meaning": "時間をおくる"
+ },
+ {
+  "char": "快",
+  "grade": 5,
+  "answer": "快い",
+  "reading": "こころよい",
+  "sentence": "快い風がふく",
+  "prompt_form": "ココロヨい",
+  "meaning": "気持ちがよい"
+ },
+ {
+  "char": "解",
+  "grade": 5,
+  "answer": "解く",
+  "reading": "とく",
+  "sentence": "算数の問題を解く",
+  "prompt_form": "トく",
+  "meaning": "問題の答えを出す"
+ },
+ {
+  "char": "確",
+  "grade": 5,
+  "answer": "確かめる",
+  "reading": "たしかめる",
+  "sentence": "もう一度答えを確かめる",
+  "prompt_form": "タシかめる",
+  "meaning": "まちがいがないか調べる"
+ },
+ {
+  "char": "額",
+  "grade": 5,
+  "answer": "額",
+  "reading": "ひたい",
+  "sentence": "額にあせをかく",
+  "prompt_form": "ヒタイ",
+  "meaning": "まゆの上、かみの毛の生えぎわまでの所"
+ },
+ {
+  "char": "幹",
+  "grade": 5,
+  "answer": "幹",
+  "reading": "みき",
+  "sentence": "大きな木の幹にふれる",
+  "prompt_form": "ミキ",
+  "meaning": "木の、えだが出ているもとの太い部分"
+ },
+ {
+  "char": "慣",
+  "grade": 5,
+  "answer": "慣れる",
+  "reading": "なれる",
+  "sentence": "新しい学校に慣れる",
+  "prompt_form": "ナれる",
+  "meaning": "何度もして、ふつうのことになる"
+ },
+ {
+  "char": "寄",
+  "grade": 5,
+  "answer": "寄せる",
+  "reading": "よせる",
+  "sentence": "岸に波が寄せる",
+  "prompt_form": "ヨせる",
+  "meaning": "近づける。近づいてくる"
+ },
+ {
+  "char": "喜",
+  "grade": 5,
+  "answer": "喜ぶ",
+  "reading": "よろこぶ",
+  "sentence": "合格を家族で喜ぶ",
+  "prompt_form": "ヨロコぶ",
+  "meaning": "うれしいと思う"
+ },
+ {
+  "char": "逆",
+  "grade": 5,
+  "answer": "逆らう",
+  "reading": "さからう",
+  "sentence": "親の言うことに逆らう",
+  "prompt_form": "サカらう",
+  "meaning": "反対の方へ進む。言うことを聞かない"
+ },
+ {
+  "char": "久",
+  "grade": 5,
+  "answer": "久しい",
+  "reading": "ひさしい",
+  "sentence": "手紙を書かなくなって久しい",
+  "prompt_form": "ヒサしい",
+  "meaning": "長い時間がたっている"
+ },
+ {
+  "char": "救",
+  "grade": 5,
+  "answer": "救う",
+  "reading": "すくう",
+  "sentence": "おぼれた子の命を救う",
+  "prompt_form": "スクう",
+  "meaning": "あぶないところを助ける"
+ },
+ {
+  "char": "居",
+  "grade": 5,
+  "answer": "居る",
+  "reading": "いる",
+  "sentence": "夕方まで図書館に居る",
+  "prompt_form": "イる",
+  "meaning": "その場所にいる"
+ },
+ {
+  "char": "許",
+  "grade": 5,
+  "answer": "許す",
+  "reading": "ゆるす",
+  "sentence": "友だちのまちがいを許す",
+  "prompt_form": "ユルす",
+  "meaning": "とがめないでおく"
+ },
+ {
+  "char": "境",
+  "grade": 5,
+  "answer": "境",
+  "reading": "さかい",
+  "sentence": "となりの県との境に山がある",
+  "prompt_form": "サカイ",
+  "meaning": "土地と土地の区切り"
+ },
+ {
+  "char": "型",
+  "grade": 5,
+  "answer": "型",
+  "reading": "かた",
+  "sentence": "ゼリーを型に流す",
+  "prompt_form": "カタ",
+  "meaning": "物の形を作るためのもの"
+ },
+ {
+  "char": "経",
+  "grade": 5,
+  "answer": "経る",
+  "reading": "へる",
+  "sentence": "長い年月を経る",
+  "prompt_form": "ヘる",
+  "meaning": "時がたつ。通っていく"
+ },
+ {
+  "char": "険",
+  "grade": 5,
+  "answer": "険しい",
+  "reading": "けわしい",
+  "sentence": "険しい山道を登る",
+  "prompt_form": "ケワしい",
+  "meaning": "山などが急で、進むのがむずかしい"
+ },
+ {
+  "char": "限",
+  "grade": 5,
+  "answer": "限る",
+  "reading": "かぎる",
+  "sentence": "参加は小学生に限る",
+  "prompt_form": "カギる",
+  "meaning": "それだけにする"
+ },
+ {
+  "char": "現",
+  "grade": 5,
+  "answer": "現れる",
+  "reading": "あらわれる",
+  "sentence": "雲の間から月が現れる",
+  "prompt_form": "アラワれる",
+  "meaning": "かくれていたものが見えるようになる"
+ },
+ {
+  "char": "減",
+  "grade": 5,
+  "answer": "減る",
+  "reading": "へる",
+  "sentence": "体重が少し減る",
+  "prompt_form": "ヘる",
+  "meaning": "数や量が少なくなる"
+ },
+ {
+  "char": "効",
+  "grade": 5,
+  "answer": "効く",
+  "reading": "きく",
+  "sentence": "かぜ薬がよく効く",
+  "prompt_form": "キく",
+  "meaning": "ききめがある"
+ },
+ {
+  "char": "厚",
+  "grade": 5,
+  "answer": "厚い",
+  "reading": "あつい",
+  "sentence": "厚い本を読み終える",
+  "prompt_form": "アツい",
+  "meaning": "はばが大きい。うすいの反対"
+ },
+ {
+  "char": "耕",
+  "grade": 5,
+  "answer": "耕す",
+  "reading": "たがやす",
+  "sentence": "春に畑を耕す",
+  "prompt_form": "タガヤす",
+  "meaning": "田や畑の土をほりかえす"
+ },
+ {
+  "char": "構",
+  "grade": 5,
+  "answer": "構える",
+  "reading": "かまえる",
+  "sentence": "カメラを構える",
+  "prompt_form": "カマえる",
+  "meaning": "すぐ使えるように用意する"
+ },
+ {
+  "char": "告",
+  "grade": 5,
+  "answer": "告げる",
+  "reading": "つげる",
+  "sentence": "友だちに別れを告げる",
+  "prompt_form": "ツげる",
+  "meaning": "知らせる"
+ },
+ {
+  "char": "混",
+  "grade": 5,
+  "answer": "混ぜる",
+  "reading": "まぜる",
+  "sentence": "赤と青の絵の具を混ぜる",
+  "prompt_form": "マぜる",
+  "meaning": "いくつかのものを一つにする"
+ },
+ {
+  "char": "再",
+  "grade": 5,
+  "answer": "再び",
+  "reading": "ふたたび",
+  "sentence": "この町を再び訪れる",
+  "prompt_form": "フタタび",
+  "meaning": "もう一度"
+ },
+ {
+  "char": "妻",
+  "grade": 5,
+  "answer": "妻",
+  "reading": "つま",
+  "sentence": "おじの妻はピアノの先生だ",
+  "prompt_form": "ツマ",
+  "meaning": "結婚している女の人（夫から見た言い方）"
+ },
+ {
+  "char": "採",
+  "grade": 5,
+  "answer": "採る",
+  "reading": "とる",
+  "sentence": "山で山菜を採る",
+  "prompt_form": "トる",
+  "meaning": "植物などをとり集める"
+ },
+ {
+  "char": "在",
+  "grade": 5,
+  "answer": "在る",
+  "reading": "ある",
+  "sentence": "駅は町の中心に在る",
+  "prompt_form": "アる",
+  "meaning": "そこにある"
+ },
+ {
+  "char": "罪",
+  "grade": 5,
+  "answer": "罪",
+  "reading": "つみ",
+  "sentence": "うそをつくのは罪だ",
+  "prompt_form": "ツミ",
+  "meaning": "してはいけない、悪い行い"
+ },
+ {
+  "char": "殺",
+  "grade": 5,
+  "answer": "殺す",
+  "reading": "ころす",
+  "sentence": "かくれんぼで息を殺す",
+  "prompt_form": "コロす",
+  "meaning": "（息を殺す＝息の音を立てないように、じっとしている）"
+ },
+ {
+  "char": "支",
+  "grade": 5,
+  "answer": "支える",
+  "reading": "ささえる",
+  "sentence": "みんなでチームを支える",
+  "prompt_form": "ササえる",
+  "meaning": "たおれないようにおさえる。助ける"
+ },
+ {
+  "char": "志",
+  "grade": 5,
+  "answer": "志す",
+  "reading": "こころざす",
+  "sentence": "将来、医者を志す",
+  "prompt_form": "ココロザす",
+  "meaning": "目標を決めて、それに向かう"
+ },
+ {
+  "char": "枝",
+  "grade": 5,
+  "answer": "枝",
+  "reading": "えだ",
+  "sentence": "木の枝に鳥がとまる",
+  "prompt_form": "エダ",
+  "meaning": "木の幹から分かれて出た部分"
+ },
+ {
+  "char": "飼",
+  "grade": 5,
+  "answer": "飼う",
+  "reading": "かう",
+  "sentence": "家で犬を飼う",
+  "prompt_form": "カう",
+  "meaning": "動物を育てる"
+ },
+ {
+  "char": "示",
+  "grade": 5,
+  "answer": "示す",
+  "reading": "しめす",
+  "sentence": "地図で道を示す",
+  "prompt_form": "シメす",
+  "meaning": "さししめす。見せる"
+ },
+ {
+  "char": "似",
+  "grade": 5,
+  "answer": "似る",
+  "reading": "にる",
+  "sentence": "子は親に似る",
+  "prompt_form": "ニる",
+  "meaning": "形や性質が同じように見える"
+ },
+ {
+  "char": "修",
+  "grade": 5,
+  "answer": "修める",
+  "reading": "おさめる",
+  "sentence": "大学で学問を修める",
+  "prompt_form": "オサめる",
+  "meaning": "学問などを身につける"
+ },
+ {
+  "char": "述",
+  "grade": 5,
+  "answer": "述べる",
+  "reading": "のべる",
+  "sentence": "自分の意見を述べる",
+  "prompt_form": "ノべる",
+  "meaning": "考えを話したり書いたりする"
+ },
+ {
+  "char": "招",
+  "grade": 5,
+  "answer": "招く",
+  "reading": "まねく",
+  "sentence": "友だちを誕生会に招く",
+  "prompt_form": "マネく",
+  "meaning": "さそって来てもらう"
+ },
+ {
+  "char": "常",
+  "grade": 5,
+  "answer": "常",
+  "reading": "つね",
+  "sentence": "常に安全に気をつける",
+  "prompt_form": "ツネ",
+  "meaning": "いつも（常に）"
+ },
+ {
+  "char": "情",
+  "grade": 5,
+  "answer": "情け",
+  "reading": "なさけ",
+  "sentence": "人の情けにふれる",
+  "prompt_form": "ナサけ",
+  "meaning": "思いやりの心"
+ },
+ {
+  "char": "織",
+  "grade": 5,
+  "answer": "織る",
+  "reading": "おる",
+  "sentence": "はたで布を織る",
+  "prompt_form": "オる",
+  "meaning": "糸を組み合わせて布を作る"
+ },
+ {
+  "char": "勢",
+  "grade": 5,
+  "answer": "勢い",
+  "reading": "いきおい",
+  "sentence": "勢いよく走り出す",
+  "prompt_form": "イキオい",
+  "meaning": "動きの強さ"
+ },
+ {
+  "char": "責",
+  "grade": 5,
+  "answer": "責める",
+  "reading": "せめる",
+  "sentence": "失敗した人を責める",
+  "prompt_form": "セめる",
+  "meaning": "まちがいや失敗をとがめる"
+ },
+ {
+  "char": "設",
+  "grade": 5,
+  "answer": "設ける",
+  "reading": "もうける",
+  "sentence": "クラスで新しいルールを設ける",
+  "prompt_form": "モウける",
+  "meaning": "作る。用意する"
+ },
+ {
+  "char": "絶",
+  "grade": 5,
+  "answer": "絶える",
+  "reading": "たえる",
+  "sentence": "連らくが絶える",
+  "prompt_form": "タえる",
+  "meaning": "続いていたものが止まる"
+ },
+ {
+  "char": "造",
+  "grade": 5,
+  "answer": "造る",
+  "reading": "つくる",
+  "sentence": "大きな船を造る",
+  "prompt_form": "ツクる",
+  "meaning": "大きな物を作る"
+ },
+ {
+  "char": "増",
+  "grade": 5,
+  "answer": "増える",
+  "reading": "ふえる",
+  "sentence": "町の人口が増える",
+  "prompt_form": "フえる",
+  "meaning": "数や量が多くなる"
+ },
+ {
+  "char": "測",
+  "grade": 5,
+  "answer": "測る",
+  "reading": "はかる",
+  "sentence": "川の深さを測る",
+  "prompt_form": "ハカる",
+  "meaning": "長さや深さなどを調べる"
+ },
+ {
+  "char": "率",
+  "grade": 5,
+  "answer": "率いる",
+  "reading": "ひきいる",
+  "sentence": "キャプテンがチームを率いる",
+  "prompt_form": "ヒキいる",
+  "meaning": "先に立って人をつれて行く"
+ },
+ {
+  "char": "貸",
+  "grade": 5,
+  "answer": "貸す",
+  "reading": "かす",
+  "sentence": "友だちに本を貸す",
+  "prompt_form": "カす",
+  "meaning": "自分の物を人に使わせる"
+ },
+ {
+  "char": "断",
+  "grade": 5,
+  "answer": "断る",
+  "reading": "ことわる",
+  "sentence": "さそいをていねいに断る",
+  "prompt_form": "コトワる",
+  "meaning": "相手の願いを受け入れない"
+ },
+ {
+  "char": "築",
+  "grade": 5,
+  "answer": "築く",
+  "reading": "きずく",
+  "sentence": "昔の人が城を築く",
+  "prompt_form": "キズく",
+  "meaning": "土や石を積んで作る。作り上げる"
+ },
+ {
+  "char": "張",
+  "grade": 5,
+  "answer": "張る",
+  "reading": "はる",
+  "sentence": "キャンプ場でテントを張る",
+  "prompt_form": "ハる",
+  "meaning": "広げてぴんとさせる"
+ },
+ {
+  "char": "導",
+  "grade": 5,
+  "answer": "導く",
+  "reading": "みちびく",
+  "sentence": "先生が生徒を正しく導く",
+  "prompt_form": "ミチビく",
+  "meaning": "案内する。教える"
+ },
+ {
+  "char": "得",
+  "grade": 5,
+  "answer": "得る",
+  "reading": "える",
+  "sentence": "本から知識を得る",
+  "prompt_form": "エる",
+  "meaning": "手に入れる"
+ },
+ {
+  "char": "独",
+  "grade": 5,
+  "answer": "独り",
+  "reading": "ひとり",
+  "sentence": "休み時間に独りで本を読む",
+  "prompt_form": "ヒトり",
+  "meaning": "自分だけ（ひとりぼっち）"
+ },
+ {
+  "char": "任",
+  "grade": 5,
+  "answer": "任せる",
+  "reading": "まかせる",
+  "sentence": "そうじを弟に任せる",
+  "prompt_form": "マカせる",
+  "meaning": "人にやってもらう"
+ },
+ {
+  "char": "燃",
+  "grade": 5,
+  "answer": "燃える",
+  "reading": "もえる",
+  "sentence": "たき火が赤く燃える",
+  "prompt_form": "モえる",
+  "meaning": "火がついて、ほのおが出る"
+ },
+ {
+  "char": "破",
+  "grade": 5,
+  "answer": "破る",
+  "reading": "やぶる",
+  "sentence": "約束を破る",
+  "prompt_form": "ヤブる",
+  "meaning": "守らない。こわす"
+ },
+ {
+  "char": "比",
+  "grade": 5,
+  "answer": "比べる",
+  "reading": "くらべる",
+  "sentence": "二つの長さを比べる",
+  "prompt_form": "クラべる",
+  "meaning": "ちがいを調べる"
+ },
+ {
+  "char": "肥",
+  "grade": 5,
+  "answer": "肥える",
+  "reading": "こえる",
+  "sentence": "牛がよく肥える",
+  "prompt_form": "コえる",
+  "meaning": "太る。土地に栄養がある"
+ },
+ {
+  "char": "備",
+  "grade": 5,
+  "answer": "備える",
+  "reading": "そなえる",
+  "sentence": "地しんに備える",
+  "prompt_form": "ソナえる",
+  "meaning": "前もって用意する"
+ },
+ {
+  "char": "貧",
+  "grade": 5,
+  "answer": "貧しい",
+  "reading": "まずしい",
+  "sentence": "昔の村の人は貧しい生活をしていた",
+  "prompt_form": "マズしい",
+  "meaning": "お金や物が少ない"
+ },
+ {
+  "char": "布",
+  "grade": 5,
+  "answer": "布",
+  "reading": "ぬの",
+  "sentence": "布でふくろをぬう",
+  "prompt_form": "ヌノ",
+  "meaning": "糸で織ったもの"
+ },
+ {
+  "char": "仏",
+  "grade": 5,
+  "answer": "仏",
+  "reading": "ほとけ",
+  "sentence": "お寺で仏をおがむ",
+  "prompt_form": "ホトケ",
+  "meaning": "仏教でおがむ仏さま"
+ },
+ {
+  "char": "粉",
+  "grade": 5,
+  "answer": "粉",
+  "reading": "こな",
+  "sentence": "小麦をひいて粉にする",
+  "prompt_form": "コナ",
+  "meaning": "とても細かいつぶ"
+ },
+ {
+  "char": "編",
+  "grade": 5,
+  "answer": "編む",
+  "reading": "あむ",
+  "sentence": "毛糸でマフラーを編む",
+  "prompt_form": "アむ",
+  "meaning": "糸などを組み合わせて作る"
+ },
+ {
+  "char": "保",
+  "grade": 5,
+  "answer": "保つ",
+  "reading": "たもつ",
+  "sentence": "健康を保つ",
+  "prompt_form": "タモつ",
+  "meaning": "そのままの状態を続ける"
+ },
+ {
+  "char": "墓",
+  "grade": 5,
+  "answer": "墓",
+  "reading": "はか",
+  "sentence": "夏休みに祖父の墓に参る",
+  "prompt_form": "ハカ",
+  "meaning": "死んだ人をほうむる所"
+ },
+ {
+  "char": "豊",
+  "grade": 5,
+  "answer": "豊か",
+  "reading": "ゆたか",
+  "sentence": "この町は自然が豊かだ",
+  "prompt_form": "ユタか",
+  "meaning": "たくさんあって満ち足りている"
+ },
+ {
+  "char": "防",
+  "grade": 5,
+  "answer": "防ぐ",
+  "reading": "ふせぐ",
+  "sentence": "手あらいでかぜを防ぐ",
+  "prompt_form": "フセぐ",
+  "meaning": "悪いことが起こらないようにする"
+ },
+ {
+  "char": "暴",
+  "grade": 5,
+  "answer": "暴れる",
+  "reading": "あばれる",
+  "sentence": "馬が急に暴れる",
+  "prompt_form": "アバれる",
+  "meaning": "らんぼうに動き回る"
+ },
+ {
+  "char": "務",
+  "grade": 5,
+  "answer": "務める",
+  "reading": "つとめる",
+  "sentence": "学級会の司会を務める",
+  "prompt_form": "ツトめる",
+  "meaning": "役目を受け持つ"
+ },
+ {
+  "char": "夢",
+  "grade": 5,
+  "answer": "夢",
+  "reading": "ゆめ",
+  "sentence": "大きな夢を持つ",
+  "prompt_form": "ユメ",
+  "meaning": "ねむっている間に見るもの。また、将来の願い"
+ },
+ {
+  "char": "迷",
+  "grade": 5,
+  "answer": "迷う",
+  "reading": "まよう",
+  "sentence": "どちらにするか迷う",
+  "prompt_form": "マヨう",
+  "meaning": "決められない。道がわからなくなる"
+ },
+ {
+  "char": "綿",
+  "grade": 5,
+  "answer": "綿",
+  "reading": "わた",
+  "sentence": "ふとんに綿をつめる",
+  "prompt_form": "ワタ",
+  "meaning": "もめんの実からとる、やわらかいせんい"
+ },
+ {
+  "char": "余",
+  "grade": 5,
+  "answer": "余る",
+  "reading": "あまる",
+  "sentence": "お金が少し余る",
+  "prompt_form": "アマる",
+  "meaning": "必要な分より多くて、のこる"
+ },
+ {
+  "char": "留",
+  "grade": 5,
+  "answer": "留める",
+  "reading": "とめる",
+  "sentence": "シャツのボタンを留める",
+  "prompt_form": "トめる",
+  "meaning": "はなれないようにする"
+ }
+]

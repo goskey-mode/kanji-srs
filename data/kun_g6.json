@@ -1,0 +1,803 @@
+[
+ {
+  "char": "異",
+  "grade": 6,
+  "answer": "異なる",
+  "reading": "ことなる",
+  "sentence": "二人の意見が異なる",
+  "prompt_form": "コトなる",
+  "meaning": "同じではない。ちがう"
+ },
+ {
+  "char": "映",
+  "grade": 6,
+  "answer": "映す",
+  "reading": "うつす",
+  "sentence": "鏡に顔を映す",
+  "prompt_form": "ウツす",
+  "meaning": "光で形をうつし出す"
+ },
+ {
+  "char": "延",
+  "grade": 6,
+  "answer": "延ばす",
+  "reading": "のばす",
+  "sentence": "出発を一日延ばす",
+  "prompt_form": "ノばす",
+  "meaning": "時期をおくらせる。長くする"
+ },
+ {
+  "char": "沿",
+  "grade": 6,
+  "answer": "沿う",
+  "reading": "そう",
+  "sentence": "川に沿う道を歩く",
+  "prompt_form": "ソう",
+  "meaning": "はなれないように、そばを続いていく"
+ },
+ {
+  "char": "我",
+  "grade": 6,
+  "answer": "我",
+  "reading": "われ",
+  "sentence": "我を忘れて遊ぶ",
+  "prompt_form": "ワレ",
+  "meaning": "自分（我を忘れる＝夢中になる）"
+ },
+ {
+  "char": "灰",
+  "grade": 6,
+  "answer": "灰",
+  "reading": "はい",
+  "sentence": "たき火の後に灰が残る",
+  "prompt_form": "ハイ",
+  "meaning": "物がもえたあとに残る、こなのようなもの"
+ },
+ {
+  "char": "割",
+  "grade": 6,
+  "answer": "割る",
+  "reading": "わる",
+  "sentence": "フライパンに卵を割る",
+  "prompt_form": "ワる",
+  "meaning": "力を加えて、いくつかに分ける"
+ },
+ {
+  "char": "株",
+  "grade": 6,
+  "answer": "株",
+  "reading": "かぶ",
+  "sentence": "切り株にすわって休む",
+  "prompt_form": "カブ",
+  "meaning": "木を切ったあとに残った根もとの部分"
+ },
+ {
+  "char": "干",
+  "grade": 6,
+  "answer": "干す",
+  "reading": "ほす",
+  "sentence": "晴れた日に洗たく物を干す",
+  "prompt_form": "ホす",
+  "meaning": "日光や風に当てて、かわかす"
+ },
+ {
+  "char": "巻",
+  "grade": 6,
+  "answer": "巻く",
+  "reading": "まく",
+  "sentence": "首にマフラーを巻く",
+  "prompt_form": "マく",
+  "meaning": "ぐるぐるとまきつける"
+ },
+ {
+  "char": "危",
+  "grade": 6,
+  "answer": "危ない",
+  "reading": "あぶない",
+  "sentence": "道路で遊ぶのは危ない",
+  "prompt_form": "アブない",
+  "meaning": "けがなどをするおそれがある"
+ },
+ {
+  "char": "机",
+  "grade": 6,
+  "answer": "机",
+  "reading": "つくえ",
+  "sentence": "机に向かって勉強する",
+  "prompt_form": "ツクエ",
+  "meaning": "本を読んだり字を書いたりするための台"
+ },
+ {
+  "char": "疑",
+  "grade": 6,
+  "answer": "疑う",
+  "reading": "うたがう",
+  "sentence": "本当かどうか疑う",
+  "prompt_form": "ウタガう",
+  "meaning": "本当ではないのではないかと思う"
+ },
+ {
+  "char": "吸",
+  "grade": 6,
+  "answer": "吸う",
+  "reading": "すう",
+  "sentence": "深く息を吸う",
+  "prompt_form": "スう",
+  "meaning": "空気などを口や鼻から中に入れる"
+ },
+ {
+  "char": "供",
+  "grade": 6,
+  "answer": "供える",
+  "reading": "そなえる",
+  "sentence": "お墓に花を供える",
+  "prompt_form": "ソナえる",
+  "meaning": "神や仏などの前に物をささげる"
+ },
+ {
+  "char": "胸",
+  "grade": 6,
+  "answer": "胸",
+  "reading": "むね",
+  "sentence": "うれしくて胸がどきどきする",
+  "prompt_form": "ムネ",
+  "meaning": "体の前の、首とおなかの間の部分"
+ },
+ {
+  "char": "勤",
+  "grade": 6,
+  "answer": "勤める",
+  "reading": "つとめる",
+  "sentence": "父は銀行に勤める",
+  "prompt_form": "ツトめる",
+  "meaning": "会社などで働く"
+ },
+ {
+  "char": "筋",
+  "grade": 6,
+  "answer": "筋",
+  "reading": "すじ",
+  "sentence": "話の筋をまとめる",
+  "prompt_form": "スジ",
+  "meaning": "物事の流れ。細長いもの"
+ },
+ {
+  "char": "敬",
+  "grade": 6,
+  "answer": "敬う",
+  "reading": "うやまう",
+  "sentence": "お年寄りを敬う",
+  "prompt_form": "ウヤマう",
+  "meaning": "相手をえらいと思って大切にする"
+ },
+ {
+  "char": "激",
+  "grade": 6,
+  "answer": "激しい",
+  "reading": "はげしい",
+  "sentence": "夜の間、激しい雨がふる",
+  "prompt_form": "ハゲしい",
+  "meaning": "いきおいが非常に強い"
+ },
+ {
+  "char": "穴",
+  "grade": 6,
+  "answer": "穴",
+  "reading": "あな",
+  "sentence": "くつ下に穴があく",
+  "prompt_form": "アナ",
+  "meaning": "くぼんだ所。つきぬけた所"
+ },
+ {
+  "char": "絹",
+  "grade": 6,
+  "answer": "絹",
+  "reading": "きぬ",
+  "sentence": "絹のスカーフ",
+  "prompt_form": "キヌ",
+  "meaning": "かいこのまゆからとった糸。また、その布"
+ },
+ {
+  "char": "源",
+  "grade": 6,
+  "answer": "源",
+  "reading": "みなもと",
+  "sentence": "川の源をたずねる",
+  "prompt_form": "ミナモト",
+  "meaning": "川の水の出てくるもと。物事の始まり"
+ },
+ {
+  "char": "厳",
+  "grade": 6,
+  "answer": "厳しい",
+  "reading": "きびしい",
+  "sentence": "厳しい練習にたえる",
+  "prompt_form": "キビしい",
+  "meaning": "いいかげんなことを許さない"
+ },
+ {
+  "char": "呼",
+  "grade": 6,
+  "answer": "呼ぶ",
+  "reading": "よぶ",
+  "sentence": "大きな声で名前を呼ぶ",
+  "prompt_form": "ヨぶ",
+  "meaning": "声をかけて来てもらう"
+ },
+ {
+  "char": "誤",
+  "grade": 6,
+  "answer": "誤る",
+  "reading": "あやまる",
+  "sentence": "薬の使い方を誤る",
+  "prompt_form": "アヤマる",
+  "meaning": "まちがえる"
+ },
+ {
+  "char": "紅",
+  "grade": 6,
+  "answer": "紅",
+  "reading": "べに",
+  "sentence": "母が口紅をぬる",
+  "prompt_form": "ベニ",
+  "meaning": "くちびるやほおにぬる赤い色のもの"
+ },
+ {
+  "char": "降",
+  "grade": 6,
+  "answer": "降りる",
+  "reading": "おりる",
+  "sentence": "次の駅で電車を降りる",
+  "prompt_form": "オりる",
+  "meaning": "乗り物から外に出る"
+ },
+ {
+  "char": "刻",
+  "grade": 6,
+  "answer": "刻む",
+  "reading": "きざむ",
+  "sentence": "野菜を細かく刻む",
+  "prompt_form": "キザむ",
+  "meaning": "細かく切る"
+ },
+ {
+  "char": "骨",
+  "grade": 6,
+  "answer": "骨",
+  "reading": "ほね",
+  "sentence": "魚の骨をとる",
+  "prompt_form": "ホネ",
+  "meaning": "体をささえる、かたいもの"
+ },
+ {
+  "char": "困",
+  "grade": 6,
+  "answer": "困る",
+  "reading": "こまる",
+  "sentence": "宿題を忘れて困る",
+  "prompt_form": "コマる",
+  "meaning": "どうしてよいかわからなくなる"
+ },
+ {
+  "char": "砂",
+  "grade": 6,
+  "answer": "砂",
+  "reading": "すな",
+  "sentence": "砂でお城を作る",
+  "prompt_form": "スナ",
+  "meaning": "細かい石のつぶ"
+ },
+ {
+  "char": "済",
+  "grade": 6,
+  "answer": "済む",
+  "reading": "すむ",
+  "sentence": "用事が早く済む",
+  "prompt_form": "スむ",
+  "meaning": "終わる"
+ },
+ {
+  "char": "裁",
+  "grade": 6,
+  "answer": "裁く",
+  "reading": "さばく",
+  "sentence": "裁判官が事件を裁く",
+  "prompt_form": "サバく",
+  "meaning": "よい悪いを決める"
+ },
+ {
+  "char": "蚕",
+  "grade": 6,
+  "answer": "蚕",
+  "reading": "かいこ",
+  "sentence": "蚕がまゆを作る",
+  "prompt_form": "カイコ",
+  "meaning": "くわの葉を食べて、絹の糸を出す虫"
+ },
+ {
+  "char": "至",
+  "grade": 6,
+  "answer": "至る",
+  "reading": "いたる",
+  "sentence": "細い道は山の頂上に至る",
+  "prompt_form": "イタる",
+  "meaning": "行き着く"
+ },
+ {
+  "char": "私",
+  "grade": 6,
+  "answer": "私",
+  "reading": "わたし",
+  "sentence": "私は五年生です",
+  "prompt_form": "ワタシ",
+  "meaning": "自分のことを言う言葉"
+ },
+ {
+  "char": "姿",
+  "grade": 6,
+  "answer": "姿",
+  "reading": "すがた",
+  "sentence": "鏡に自分の姿をうつす",
+  "prompt_form": "スガタ",
+  "meaning": "体の形。ようす"
+ },
+ {
+  "char": "射",
+  "grade": 6,
+  "answer": "射る",
+  "reading": "いる",
+  "sentence": "矢で的を射る",
+  "prompt_form": "イる",
+  "meaning": "矢を放つ"
+ },
+ {
+  "char": "捨",
+  "grade": 6,
+  "answer": "捨てる",
+  "reading": "すてる",
+  "sentence": "ごみをごみ箱に捨てる",
+  "prompt_form": "スてる",
+  "meaning": "いらない物を手ばなす"
+ },
+ {
+  "char": "若",
+  "grade": 6,
+  "answer": "若い",
+  "reading": "わかい",
+  "sentence": "若い先生が来る",
+  "prompt_form": "ワカい",
+  "meaning": "年が少ない"
+ },
+ {
+  "char": "収",
+  "grade": 6,
+  "answer": "収める",
+  "reading": "おさめる",
+  "sentence": "試合で勝利を収める",
+  "prompt_form": "オサめる",
+  "meaning": "自分のものにする。中に入れる"
+ },
+ {
+  "char": "従",
+  "grade": 6,
+  "answer": "従う",
+  "reading": "したがう",
+  "sentence": "ルールに従う",
+  "prompt_form": "シタガう",
+  "meaning": "言われたとおりにする"
+ },
+ {
+  "char": "縦",
+  "grade": 6,
+  "answer": "縦",
+  "reading": "たて",
+  "sentence": "ノートに縦の線を引く",
+  "prompt_form": "タテ",
+  "meaning": "上から下への方向"
+ },
+ {
+  "char": "縮",
+  "grade": 6,
+  "answer": "縮む",
+  "reading": "ちぢむ",
+  "sentence": "セーターが洗たくで縮む",
+  "prompt_form": "チヂむ",
+  "meaning": "小さくなる。短くなる"
+ },
+ {
+  "char": "除",
+  "grade": 6,
+  "answer": "除く",
+  "reading": "のぞく",
+  "sentence": "悪い所を除く",
+  "prompt_form": "ノゾく",
+  "meaning": "取りさる"
+ },
+ {
+  "char": "傷",
+  "grade": 6,
+  "answer": "傷",
+  "reading": "きず",
+  "sentence": "ひざの傷が治る",
+  "prompt_form": "キズ",
+  "meaning": "けがをした所"
+ },
+ {
+  "char": "針",
+  "grade": 6,
+  "answer": "針",
+  "reading": "はり",
+  "sentence": "針に糸を通す",
+  "prompt_form": "ハリ",
+  "meaning": "ぬいものに使う、細く先のとがった道具"
+ },
+ {
+  "char": "垂",
+  "grade": 6,
+  "answer": "垂れる",
+  "reading": "たれる",
+  "sentence": "えだから水が垂れる",
+  "prompt_form": "タれる",
+  "meaning": "しずくなどが下へ落ちる"
+ },
+ {
+  "char": "盛",
+  "grade": 6,
+  "answer": "盛る",
+  "reading": "もる",
+  "sentence": "ご飯を茶わんに盛る",
+  "prompt_form": "モる",
+  "meaning": "入れ物にいっぱいに入れる"
+ },
+ {
+  "char": "舌",
+  "grade": 6,
+  "answer": "舌",
+  "reading": "した",
+  "sentence": "熱いお茶で舌をやけどする",
+  "prompt_form": "シタ",
+  "meaning": "口の中にある、味を感じる部分"
+ },
+ {
+  "char": "泉",
+  "grade": 6,
+  "answer": "泉",
+  "reading": "いずみ",
+  "sentence": "森の中に泉がわく",
+  "prompt_form": "イズミ",
+  "meaning": "地面から水がわき出る所"
+ },
+ {
+  "char": "洗",
+  "grade": 6,
+  "answer": "洗う",
+  "reading": "あらう",
+  "sentence": "食器を洗う",
+  "prompt_form": "アラう",
+  "meaning": "水などでよごれを落とす"
+ },
+ {
+  "char": "染",
+  "grade": 6,
+  "answer": "染める",
+  "reading": "そめる",
+  "sentence": "布を青く染める",
+  "prompt_form": "ソめる",
+  "meaning": "色をしみこませる"
+ },
+ {
+  "char": "善",
+  "grade": 6,
+  "answer": "善い",
+  "reading": "よい",
+  "sentence": "善い行いを心がける",
+  "prompt_form": "ヨい",
+  "meaning": "道徳的に正しい"
+ },
+ {
+  "char": "窓",
+  "grade": 6,
+  "answer": "窓",
+  "reading": "まど",
+  "sentence": "窓を開けて空気を入れかえる",
+  "prompt_form": "マド",
+  "meaning": "光や風を取り入れるために、かべにあけた所"
+ },
+ {
+  "char": "創",
+  "grade": 6,
+  "answer": "創る",
+  "reading": "つくる",
+  "sentence": "新しい文化を創る",
+  "prompt_form": "ツクる",
+  "meaning": "はじめて作り出す"
+ },
+ {
+  "char": "尊",
+  "grade": 6,
+  "answer": "尊い",
+  "reading": "とうとい",
+  "sentence": "命はとても尊い",
+  "prompt_form": "トウトい",
+  "meaning": "大切で、ねうちがある"
+ },
+ {
+  "char": "退",
+  "grade": 6,
+  "answer": "退く",
+  "reading": "しりぞく",
+  "sentence": "一歩後ろへ退く",
+  "prompt_form": "シリゾく",
+  "meaning": "後ろへ下がる"
+ },
+ {
+  "char": "探",
+  "grade": 6,
+  "answer": "探す",
+  "reading": "さがす",
+  "sentence": "なくしたかぎを探す",
+  "prompt_form": "サガす",
+  "meaning": "見つけようとする"
+ },
+ {
+  "char": "暖",
+  "grade": 6,
+  "answer": "暖かい",
+  "reading": "あたたかい",
+  "sentence": "春の暖かい日ざし",
+  "prompt_form": "アタタかい",
+  "meaning": "（気温が）ほどよく高い"
+ },
+ {
+  "char": "値",
+  "grade": 6,
+  "answer": "値",
+  "reading": "ね",
+  "sentence": "野菜の値が上がる",
+  "prompt_form": "ネ",
+  "meaning": "ねだん"
+ },
+ {
+  "char": "頂",
+  "grade": 6,
+  "answer": "頂く",
+  "reading": "いただく",
+  "sentence": "先生からおかしを頂く",
+  "prompt_form": "イタダく",
+  "meaning": "「もらう」をへりくだった言い方"
+ },
+ {
+  "char": "潮",
+  "grade": 6,
+  "answer": "潮",
+  "reading": "しお",
+  "sentence": "夕方になると潮が満ちる",
+  "prompt_form": "シオ",
+  "meaning": "海の水の満ち引き"
+ },
+ {
+  "char": "痛",
+  "grade": 6,
+  "answer": "痛む",
+  "reading": "いたむ",
+  "sentence": "ころんだ足が痛む",
+  "prompt_form": "イタむ",
+  "meaning": "いたいと感じる"
+ },
+ {
+  "char": "届",
+  "grade": 6,
+  "answer": "届ける",
+  "reading": "とどける",
+  "sentence": "わすれ物を家まで届ける",
+  "prompt_form": "トドける",
+  "meaning": "物を相手の所へ持っていく"
+ },
+ {
+  "char": "難",
+  "grade": 6,
+  "answer": "難しい",
+  "reading": "むずかしい",
+  "sentence": "この問題は難しい",
+  "prompt_form": "ムズカしい",
+  "meaning": "わかりにくい。易しいの反対"
+ },
+ {
+  "char": "乳",
+  "grade": 6,
+  "answer": "乳",
+  "reading": "ちち",
+  "sentence": "牛の乳をしぼる",
+  "prompt_form": "チチ",
+  "meaning": "動物のメスが子に飲ませる白い液"
+ },
+ {
+  "char": "認",
+  "grade": 6,
+  "answer": "認める",
+  "reading": "みとめる",
+  "sentence": "自分のまちがいを認める",
+  "prompt_form": "ミトめる",
+  "meaning": "そうだと受け入れる"
+ },
+ {
+  "char": "納",
+  "grade": 6,
+  "answer": "納める",
+  "reading": "おさめる",
+  "sentence": "国に税金を納める",
+  "prompt_form": "オサめる",
+  "meaning": "お金や品物をわたす"
+ },
+ {
+  "char": "拝",
+  "grade": 6,
+  "answer": "拝む",
+  "reading": "おがむ",
+  "sentence": "手を合わせて拝む",
+  "prompt_form": "オガむ",
+  "meaning": "手を合わせていのる"
+ },
+ {
+  "char": "背",
+  "grade": 6,
+  "answer": "背",
+  "reading": "せ",
+  "sentence": "一年で背がのびる",
+  "prompt_form": "セ",
+  "meaning": "身長。せなか"
+ },
+ {
+  "char": "俵",
+  "grade": 6,
+  "answer": "俵",
+  "reading": "たわら",
+  "sentence": "米を俵につめる",
+  "prompt_form": "タワラ",
+  "meaning": "わらで編んだ、米などを入れるふくろ"
+ },
+ {
+  "char": "腹",
+  "grade": 6,
+  "answer": "腹",
+  "reading": "はら",
+  "sentence": "いじわるをされて腹が立つ",
+  "prompt_form": "ハラ",
+  "meaning": "おなか（腹が立つ＝おこる）"
+ },
+ {
+  "char": "奮",
+  "grade": 6,
+  "answer": "奮う",
+  "reading": "ふるう",
+  "sentence": "勇気を奮う",
+  "prompt_form": "フルう",
+  "meaning": "心を元気づける"
+ },
+ {
+  "char": "並",
+  "grade": 6,
+  "answer": "並べる",
+  "reading": "ならべる",
+  "sentence": "本をたなに並べる",
+  "prompt_form": "ナラべる",
+  "meaning": "順にそろえて置く"
+ },
+ {
+  "char": "閉",
+  "grade": 6,
+  "answer": "閉じる",
+  "reading": "とじる",
+  "sentence": "本を閉じる",
+  "prompt_form": "トじる",
+  "meaning": "開いているものをしめる"
+ },
+ {
+  "char": "片",
+  "grade": 6,
+  "answer": "片",
+  "reading": "かた",
+  "sentence": "片手でボールを受ける",
+  "prompt_form": "カタ",
+  "meaning": "二つあるものの一方（片手）"
+ },
+ {
+  "char": "補",
+  "grade": 6,
+  "answer": "補う",
+  "reading": "おぎなう",
+  "sentence": "足りない分を補う",
+  "prompt_form": "オギナう",
+  "meaning": "足りないところをうめる"
+ },
+ {
+  "char": "暮",
+  "grade": 6,
+  "answer": "暮らす",
+  "reading": "くらす",
+  "sentence": "家族四人で暮らす",
+  "prompt_form": "クらす",
+  "meaning": "毎日の生活をする"
+ },
+ {
+  "char": "宝",
+  "grade": 6,
+  "answer": "宝",
+  "reading": "たから",
+  "sentence": "この写真はわたしの宝だ",
+  "prompt_form": "タカラ",
+  "meaning": "とても大切なもの"
+ },
+ {
+  "char": "訪",
+  "grade": 6,
+  "answer": "訪ねる",
+  "reading": "たずねる",
+  "sentence": "夏休みに祖母の家を訪ねる",
+  "prompt_form": "タズねる",
+  "meaning": "人の家などへ行く"
+ },
+ {
+  "char": "忘",
+  "grade": 6,
+  "answer": "忘れる",
+  "reading": "わすれる",
+  "sentence": "宿題を忘れる",
+  "prompt_form": "ワスれる",
+  "meaning": "覚えていたことを思い出せなくなる"
+ },
+ {
+  "char": "訳",
+  "grade": 6,
+  "answer": "訳",
+  "reading": "わけ",
+  "sentence": "おくれた訳を話す",
+  "prompt_form": "ワケ",
+  "meaning": "理由"
+ },
+ {
+  "char": "預",
+  "grade": 6,
+  "answer": "預ける",
+  "reading": "あずける",
+  "sentence": "駅のロッカーに荷物を預ける",
+  "prompt_form": "アズける",
+  "meaning": "人や場所にしばらくたのんでおく"
+ },
+ {
+  "char": "幼",
+  "grade": 6,
+  "answer": "幼い",
+  "reading": "おさない",
+  "sentence": "幼い弟の世話をする",
+  "prompt_form": "オサナい",
+  "meaning": "年が少ない"
+ },
+ {
+  "char": "乱",
+  "grade": 6,
+  "answer": "乱れる",
+  "reading": "みだれる",
+  "sentence": "風でかみの毛が乱れる",
+  "prompt_form": "ミダれる",
+  "meaning": "ばらばらになる。整っていない"
+ },
+ {
+  "char": "卵",
+  "grade": 6,
+  "answer": "卵",
+  "reading": "たまご",
+  "sentence": "にわとりが卵を産む",
+  "prompt_form": "タマゴ",
+  "meaning": "鳥などが産む、からに入ったもの"
+ },
+ {
+  "char": "裏",
+  "grade": 6,
+  "answer": "裏",
+  "reading": "うら",
+  "sentence": "紙の裏に名前を書く",
+  "prompt_form": "ウラ",
+  "meaning": "表の反対側"
+ }
+]
