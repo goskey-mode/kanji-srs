@@ -85,10 +85,11 @@
   .zc.g { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 700; }
   .zc.g::after { content: '★'; position: absolute; top: 0; right: 2px; font-size: 10px; }
   .zc.p { border-color: var(--muted); }
-  /* 熟語・訓読みの点（訓読みがある字だけ）。左が熟語、右が訓読み。○ = まだ、● = 知ってた・卒業、青 = 練習中 */
+  /* 熟語・訓読みの点（訓読みがある字だけ）。左が熟語、右が訓読み全体。○ = まだ、◐ = 一部、● = 知ってた・卒業、青 = 練習中 */
   .zc .dots { position: absolute; top: 3px; left: 3px; display: flex; gap: 2px; }
   .zc .dots s { width: 6px; height: 6px; border-radius: 50%; border: 1px solid currentColor; opacity: .8; }
   .zc .dots s.k, .zc .dots s.g { background: currentColor; }
+  .zc .dots s.p { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
   .zc .dots s.l { background: var(--accent); border-color: var(--accent); opacity: 1; }
   .zlegend .dots { position: static; display: inline-flex; margin-right: 3px; }
   .zcard .kind { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; width: 100%; }
@@ -321,11 +322,11 @@
   }
 
   // ───── 漢字図鑑 ─────
-  // 1026字を学年ごとにマスで並べる。1字＝熟語（多くは音読み）＋訓読みの語（訓読みの無い字は熟語だけ）
-  // まだ（うすい）／途中（熟語か訓読みの一方だけ終えた）／知ってた（うすい色）／練習中（枠と段階のバー）／卒業（濃い色と★）
+  // 1026字を学年ごとにマスで並べる。1字＝熟語（多くは音読み）＋訓読みの語（小学校で習う訓読みごとに1語。無い字は熟語だけ）
+  // まだ（うすい）／途中（一部の語だけ終えた）／知ってた（うすい色）／練習中（枠と段階のバー）／卒業（濃い色と★）
   var KEY_ZGRADE = 'kanjisrs_zukan_grade';
   var ZSTATE = { n: 'まだ', p: '途中', k: '知ってた', l: '練習中', g: '卒業' };
-  var WSTATE = { n: 'まだ', k: '知ってた', l: '練習中', g: '卒業' };
+  var WSTATE = { n: 'まだ', p: '一部', k: '知ってた', l: '練習中', g: '卒業' };
   function showZukan() {
     showLoading();
     KS.call('getZukan', state.pin).then(function (z) { state.zukan = z; drawZukan(); }, function (e) { showError(e, showZukan); });
@@ -350,12 +351,12 @@
         var kids = [c[0]];
         if (c[5]) kids.push(h('span', { class: 'dots' }, [h('s', { class: c[4] }), h('s', { class: c[5] })]));
         if (c[2] === 'l') kids.push(h('i', {}, [h('b', { style: 'width:' + Math.round(c[3] / 6 * 100) + '%' })]));
-        var title = ZSTATE[c[2]] + (c[5] ? '（熟語: ' + WSTATE[c[4]] + '・訓読み: ' + WSTATE[c[5]] + '）' : '');
+        var title = ZSTATE[c[2]] + (c[5] ? '（熟語: ' + WSTATE[c[4]] + '・訓読み: ' + c[6] + '/' + c[7] + '）' : '');
         return h('button', { class: 'zc ' + c[2], title: title, onclick: function () { showKanji(c[0]); } }, kids);
       })),
       h('div', { class: 'zlegend' }, ['n', 'p', 'k', 'l', 'g'].map(function (k) {
         return h('span', {}, [h('span', { class: 'zc ' + k, text: '字' }), ZSTATE[k]]);
-      }).concat([h('span', {}, [h('span', { class: 'dots' }, [h('s', { class: 'k' }), h('s', { class: 'n' })]), '左が熟語・右が訓読み（●終えた ○まだ）'])])),
+      }).concat([h('span', {}, [h('span', { class: 'dots' }, [h('s', { class: 'k' }), h('s', { class: 'p' })]), '左が熟語・右が訓読み（●終えた ◐一部 ○まだ）'])])),
       h('div', { class: 'hint', text: '字をおすと、ことばと例文が見られます' })
     ];
     setScreen([h('span', { text: 'かんじ図鑑' }), h('span', { class: 'grow' }), h('button', { class: 'chip', text: 'もどる', onclick: showHome })], main);

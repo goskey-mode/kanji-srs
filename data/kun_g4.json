@@ -2,6 +2,7 @@
  {
   "char": "位",
   "grade": 4,
+  "kun": "くらい",
   "answer": "位",
   "reading": "くらい",
   "sentence": "百の位の数を答える",
@@ -11,6 +12,7 @@
  {
   "char": "印",
   "grade": 4,
+  "kun": "しるし",
   "answer": "印",
   "reading": "しるし",
   "sentence": "大事な所に印をつける",
@@ -20,6 +22,7 @@
  {
   "char": "栄",
   "grade": 4,
+  "kun": "さかえる",
   "answer": "栄える",
   "reading": "さかえる",
   "sentence": "港のまわりに町が栄える",
@@ -29,6 +32,7 @@
  {
   "char": "塩",
   "grade": 4,
+  "kun": "しお",
   "answer": "塩",
   "reading": "しお",
   "sentence": "料理に塩を少し入れる",
@@ -38,6 +42,7 @@
  {
   "char": "加",
   "grade": 4,
+  "kun": "くわえる",
   "answer": "加える",
   "reading": "くわえる",
   "sentence": "スープに水を加える",
@@ -47,6 +52,7 @@
  {
   "char": "果",
   "grade": 4,
+  "kun": "はたす",
   "answer": "果たす",
   "reading": "はたす",
   "sentence": "自分の役目を果たす",
@@ -56,6 +62,7 @@
  {
   "char": "芽",
   "grade": 4,
+  "kun": "め",
   "answer": "芽",
   "reading": "め",
   "sentence": "種から芽が出る",
@@ -65,6 +72,7 @@
  {
   "char": "改",
   "grade": 4,
+  "kun": "あらためる",
   "answer": "改める",
   "reading": "あらためる",
   "sentence": "悪い習慣を改める",
@@ -74,6 +82,7 @@
  {
   "char": "街",
   "grade": 4,
+  "kun": "まち",
   "answer": "街",
   "reading": "まち",
   "sentence": "夜の街に明かりがともる",
@@ -83,6 +92,7 @@
  {
   "char": "覚",
   "grade": 4,
+  "kun": "さめる",
   "answer": "覚める",
   "reading": "さめる",
   "sentence": "朝早く目が覚める",
@@ -92,6 +102,7 @@
  {
   "char": "潟",
   "grade": 4,
+  "kun": "かた",
   "answer": "潟",
   "reading": "かた",
   "sentence": "潟には多くの鳥がやって来る",
@@ -101,6 +112,7 @@
  {
   "char": "管",
   "grade": 4,
+  "kun": "くだ",
   "answer": "管",
   "reading": "くだ",
   "sentence": "管を通して水を流す",
@@ -110,6 +122,7 @@
  {
   "char": "関",
   "grade": 4,
+  "kun": "かかわる",
   "answer": "関わる",
   "reading": "かかわる",
   "sentence": "命に関わる大事なこと",
@@ -119,6 +132,7 @@
  {
   "char": "願",
   "grade": 4,
+  "kun": "ねがう",
   "answer": "願う",
   "reading": "ねがう",
   "sentence": "みんなの幸せを願う",
@@ -128,6 +142,7 @@
  {
   "char": "旗",
   "grade": 4,
+  "kun": "はた",
   "answer": "旗",
   "reading": "はた",
   "sentence": "運動会で旗をふる",
@@ -137,6 +152,7 @@
  {
   "char": "求",
   "grade": 4,
+  "kun": "もとめる",
   "answer": "求める",
   "reading": "もとめる",
   "sentence": "助けを求める",
@@ -146,6 +162,7 @@
  {
   "char": "泣",
   "grade": 4,
+  "kun": "なく",
   "answer": "泣く",
   "reading": "なく",
   "sentence": "赤ちゃんが大きな声で泣く",
@@ -155,6 +172,7 @@
  {
   "char": "挙",
   "grade": 4,
+  "kun": "あげる",
   "answer": "挙げる",
   "reading": "あげる",
   "sentence": "わかりやすい例を挙げる",
@@ -164,6 +182,7 @@
  {
   "char": "共",
   "grade": 4,
+  "kun": "とも",
   "answer": "共",
   "reading": "とも",
   "sentence": "家族と共に旅行する",
@@ -173,6 +192,7 @@
  {
   "char": "鏡",
   "grade": 4,
+  "kun": "かがみ",
   "answer": "鏡",
   "reading": "かがみ",
   "sentence": "鏡で顔を見る",
@@ -182,6 +202,7 @@
  {
   "char": "熊",
   "grade": 4,
+  "kun": "くま",
   "answer": "熊",
   "reading": "くま",
   "sentence": "山で熊を見かけた",
@@ -191,6 +212,7 @@
  {
   "char": "群",
   "grade": 4,
+  "kun": "むれ",
   "answer": "群れ",
   "reading": "むれ",
   "sentence": "羊の群れが草を食べる",
@@ -200,6 +222,7 @@
  {
   "char": "欠",
   "grade": 4,
+  "kun": "かける",
   "answer": "欠ける",
   "reading": "かける",
   "sentence": "茶わんのふちが欠ける",
@@ -209,6 +232,7 @@
  {
   "char": "結",
   "grade": 4,
+  "kun": "むすぶ",
   "answer": "結ぶ",
   "reading": "むすぶ",
   "sentence": "くつのひもを結ぶ",
@@ -218,6 +242,7 @@
  {
   "char": "建",
   "grade": 4,
+  "kun": "たてる",
   "answer": "建てる",
   "reading": "たてる",
   "sentence": "新しい家を建てる",
@@ -227,6 +252,7 @@
  {
   "char": "固",
   "grade": 4,
+  "kun": "かためる",
   "answer": "固める",
   "reading": "かためる",
   "sentence": "雪をぎゅっと固める",
@@ -236,6 +262,7 @@
  {
   "char": "好",
   "grade": 4,
+  "kun": "このむ",
   "answer": "好む",
   "reading": "このむ",
   "sentence": "父はあまいものを好む",
@@ -245,6 +272,7 @@
  {
   "char": "香",
   "grade": 4,
+  "kun": "かおる",
   "answer": "香る",
   "reading": "かおる",
   "sentence": "庭の花が香る",
@@ -254,6 +282,7 @@
  {
   "char": "差",
   "grade": 4,
+  "kun": "さす",
   "answer": "差す",
   "reading": "さす",
   "sentence": "雨がふってきたのでかさを差す",
@@ -263,6 +292,7 @@
  {
   "char": "菜",
   "grade": 4,
+  "kun": "な",
   "answer": "菜",
   "reading": "な",
   "sentence": "菜の花が一面にさく",
@@ -272,6 +302,7 @@
  {
   "char": "最",
   "grade": 4,
+  "kun": "もっとも",
   "answer": "最も",
   "reading": "もっとも",
   "sentence": "日本で最も高い山",
@@ -281,6 +312,7 @@
  {
   "char": "崎",
   "grade": 4,
+  "kun": "さき",
   "answer": "崎",
   "reading": "さき",
   "sentence": "長崎は坂の多い町だ",
@@ -290,6 +322,7 @@
  {
   "char": "札",
   "grade": 4,
+  "kun": "ふだ",
   "answer": "札",
   "reading": "ふだ",
   "sentence": "かばんに名札をつける",
@@ -299,6 +332,7 @@
  {
   "char": "刷",
   "grade": 4,
+  "kun": "する",
   "answer": "刷る",
   "reading": "する",
   "sentence": "学級新聞を刷る",
@@ -308,6 +342,7 @@
  {
   "char": "参",
   "grade": 4,
+  "kun": "まいる",
   "answer": "参る",
   "reading": "まいる",
   "sentence": "お墓に参る",
@@ -317,6 +352,7 @@
  {
   "char": "産",
   "grade": 4,
+  "kun": "うむ",
   "answer": "産む",
   "reading": "うむ",
   "sentence": "にわとりが卵を産む",
@@ -326,6 +362,7 @@
  {
   "char": "散",
   "grade": 4,
+  "kun": "ちらかる",
   "answer": "散らかる",
   "reading": "ちらかる",
   "sentence": "部屋におもちゃが散らかる",
@@ -335,6 +372,7 @@
  {
   "char": "残",
   "grade": 4,
+  "kun": "のこす",
   "answer": "残す",
   "reading": "のこす",
   "sentence": "きらいなおかずを残す",
@@ -344,6 +382,7 @@
  {
   "char": "試",
   "grade": 4,
+  "kun": "こころみる",
   "answer": "試みる",
   "reading": "こころみる",
   "sentence": "新しい方法を試みる",
@@ -353,6 +392,7 @@
  {
   "char": "治",
   "grade": 4,
+  "kun": "おさめる",
   "answer": "治める",
   "reading": "おさめる",
   "sentence": "昔、王が国を治める",
@@ -362,6 +402,7 @@
  {
   "char": "鹿",
   "grade": 4,
+  "kun": "しか",
   "answer": "鹿",
   "reading": "しか",
   "sentence": "奈良公園で鹿にえさをやる",
@@ -371,6 +412,7 @@
  {
   "char": "失",
   "grade": 4,
+  "kun": "うしなう",
   "answer": "失う",
   "reading": "うしなう",
   "sentence": "自信を失う",
@@ -380,6 +422,7 @@
  {
   "char": "借",
   "grade": 4,
+  "kun": "かりる",
   "answer": "借りる",
   "reading": "かりる",
   "sentence": "友だちに消しゴムを借りる",
@@ -389,6 +432,7 @@
  {
   "char": "種",
   "grade": 4,
+  "kun": "たね",
   "answer": "種",
   "reading": "たね",
   "sentence": "畑にひまわりの種をまく",
@@ -398,6 +442,7 @@
  {
   "char": "周",
   "grade": 4,
+  "kun": "まわり",
   "answer": "周り",
   "reading": "まわり",
   "sentence": "池の周りを歩く",
@@ -407,6 +452,7 @@
  {
   "char": "祝",
   "grade": 4,
+  "kun": "いわう",
   "answer": "祝う",
   "reading": "いわう",
   "sentence": "みんなで誕生日を祝う",
@@ -416,6 +462,7 @@
  {
   "char": "初",
   "grade": 4,
+  "kun": "はじめて",
   "answer": "初めて",
   "reading": "はじめて",
   "sentence": "初めて一人で電車に乗る",
@@ -425,6 +472,7 @@
  {
   "char": "松",
   "grade": 4,
+  "kun": "まつ",
   "answer": "松",
   "reading": "まつ",
   "sentence": "海岸に松の木がならぶ",
@@ -434,6 +482,7 @@
  {
   "char": "笑",
   "grade": 4,
+  "kun": "わらう",
   "answer": "笑う",
   "reading": "わらう",
   "sentence": "おもしろい話に笑う",
@@ -443,6 +492,7 @@
  {
   "char": "唱",
   "grade": 4,
+  "kun": "となえる",
   "answer": "唱える",
   "reading": "となえる",
   "sentence": "お寺で念仏を唱える",
@@ -452,6 +502,7 @@
  {
   "char": "焼",
   "grade": 4,
+  "kun": "やける",
   "answer": "焼ける",
   "reading": "やける",
   "sentence": "パンがこんがり焼ける",
@@ -461,6 +512,7 @@
  {
   "char": "照",
   "grade": 4,
+  "kun": "てらす",
   "answer": "照らす",
   "reading": "てらす",
   "sentence": "月が夜道を照らす",
@@ -470,6 +522,7 @@
  {
   "char": "城",
   "grade": 4,
+  "kun": "しろ",
   "answer": "城",
   "reading": "しろ",
   "sentence": "お城の天守閣を見上げる",
@@ -479,6 +532,7 @@
  {
   "char": "縄",
   "grade": 4,
+  "kun": "なわ",
   "answer": "縄",
   "reading": "なわ",
   "sentence": "荷物を縄でしばる",
@@ -488,6 +542,7 @@
  {
   "char": "井",
   "grade": 4,
+  "kun": "い",
   "answer": "井",
   "reading": "い",
   "sentence": "井戸の水をくむ",
@@ -497,6 +552,7 @@
  {
   "char": "成",
   "grade": 4,
+  "kun": "なす",
   "answer": "成す",
   "reading": "なす",
   "sentence": "水鳥が群れを成す",
@@ -506,6 +562,7 @@
  {
   "char": "省",
   "grade": 4,
+  "kun": "はぶく",
   "answer": "省く",
   "reading": "はぶく",
   "sentence": "むだな手間を省く",
@@ -515,6 +572,7 @@
  {
   "char": "清",
   "grade": 4,
+  "kun": "きよい",
   "answer": "清い",
   "reading": "きよい",
   "sentence": "山から清い水がわく",
@@ -524,6 +582,7 @@
  {
   "char": "静",
   "grade": 4,
+  "kun": "しずか",
   "answer": "静か",
   "reading": "しずか",
   "sentence": "図書館では静かにする",
@@ -533,6 +592,7 @@
  {
   "char": "積",
   "grade": 4,
+  "kun": "つもる",
   "answer": "積もる",
   "reading": "つもる",
   "sentence": "雪が一メートルも積もる",
@@ -542,6 +602,7 @@
  {
   "char": "折",
   "grade": 4,
+  "kun": "おれる",
   "answer": "折れる",
   "reading": "おれる",
   "sentence": "強い風で木のえだが折れる",
@@ -551,6 +612,7 @@
  {
   "char": "節",
   "grade": 4,
+  "kun": "ふし",
   "answer": "節",
   "reading": "ふし",
   "sentence": "竹の節を数える",
@@ -560,6 +622,7 @@
  {
   "char": "説",
   "grade": 4,
+  "kun": "とく",
   "answer": "説く",
   "reading": "とく",
   "sentence": "先生が命の大切さを説く",
@@ -569,6 +632,7 @@
  {
   "char": "浅",
   "grade": 4,
+  "kun": "あさい",
   "answer": "浅い",
   "reading": "あさい",
   "sentence": "この川は浅い",
@@ -578,6 +642,7 @@
  {
   "char": "戦",
   "grade": 4,
+  "kun": "たたかう",
   "answer": "戦う",
   "reading": "たたかう",
   "sentence": "強いチームと戦う",
@@ -587,6 +652,7 @@
  {
   "char": "選",
   "grade": 4,
+  "kun": "えらぶ",
   "answer": "選ぶ",
   "reading": "えらぶ",
   "sentence": "好きな色を選ぶ",
@@ -596,6 +662,7 @@
  {
   "char": "争",
   "grade": 4,
+  "kun": "あらそう",
   "answer": "争う",
   "reading": "あらそう",
   "sentence": "一位を争う",
@@ -605,6 +672,7 @@
  {
   "char": "倉",
   "grade": 4,
+  "kun": "くら",
   "answer": "倉",
   "reading": "くら",
   "sentence": "米を倉にしまう",
@@ -614,6 +682,7 @@
  {
   "char": "巣",
   "grade": 4,
+  "kun": "す",
   "answer": "巣",
   "reading": "す",
   "sentence": "木の上に鳥の巣がある",
@@ -623,6 +692,7 @@
  {
   "char": "束",
   "grade": 4,
+  "kun": "たば",
   "answer": "束",
   "reading": "たば",
   "sentence": "花の束をおくる",
@@ -632,6 +702,7 @@
  {
   "char": "側",
   "grade": 4,
+  "kun": "がわ",
   "answer": "側",
   "reading": "がわ",
   "sentence": "道の右側を歩く",
@@ -641,6 +712,7 @@
  {
   "char": "続",
   "grade": 4,
+  "kun": "つづける",
   "answer": "続ける",
   "reading": "つづける",
   "sentence": "毎日日記を書き続ける",
@@ -650,6 +722,7 @@
  {
   "char": "孫",
   "grade": 4,
+  "kun": "まご",
   "answer": "孫",
   "reading": "まご",
   "sentence": "祖父が孫をかわいがる",
@@ -659,6 +732,7 @@
  {
   "char": "帯",
   "grade": 4,
+  "kun": "おび",
   "answer": "帯",
   "reading": "おび",
   "sentence": "着物の帯をしめる",
@@ -668,6 +742,7 @@
  {
   "char": "置",
   "grade": 4,
+  "kun": "おく",
   "answer": "置く",
   "reading": "おく",
   "sentence": "つくえの上に本を置く",
@@ -677,6 +752,7 @@
  {
   "char": "仲",
   "grade": 4,
+  "kun": "なか",
   "answer": "仲",
   "reading": "なか",
   "sentence": "二人はとても仲がよい",
@@ -686,6 +762,7 @@
  {
   "char": "沖",
   "grade": 4,
+  "kun": "おき",
   "answer": "沖",
   "reading": "おき",
   "sentence": "沖に船が見える",
@@ -695,6 +772,7 @@
  {
   "char": "低",
   "grade": 4,
+  "kun": "ひくい",
   "answer": "低い",
   "reading": "ひくい",
   "sentence": "低い声で話す",
@@ -704,6 +782,7 @@
  {
   "char": "底",
   "grade": 4,
+  "kun": "そこ",
   "answer": "底",
   "reading": "そこ",
   "sentence": "池の底に石がしずむ",
@@ -713,6 +792,7 @@
  {
   "char": "的",
   "grade": 4,
+  "kun": "まと",
   "answer": "的",
   "reading": "まと",
   "sentence": "矢が的に当たる",
@@ -722,6 +802,7 @@
  {
   "char": "伝",
   "grade": 4,
+  "kun": "つたえる",
   "answer": "伝える",
   "reading": "つたえる",
   "sentence": "先生からの話を家族に伝える",
@@ -731,6 +812,7 @@
  {
   "char": "努",
   "grade": 4,
+  "kun": "つとめる",
   "answer": "努める",
   "reading": "つとめる",
   "sentence": "問題の解決に努める",
@@ -740,6 +822,7 @@
  {
   "char": "働",
   "grade": 4,
+  "kun": "はたらく",
   "answer": "働く",
   "reading": "はたらく",
   "sentence": "父は駅の近くで働く",
@@ -749,6 +832,7 @@
  {
   "char": "梨",
   "grade": 4,
+  "kun": "なし",
   "answer": "梨",
   "reading": "なし",
   "sentence": "秋においしい梨をむく",
@@ -758,6 +842,7 @@
  {
   "char": "熱",
   "grade": 4,
+  "kun": "あつい",
   "answer": "熱い",
   "reading": "あつい",
   "sentence": "熱いお茶を飲む",
@@ -767,6 +852,7 @@
  {
   "char": "敗",
   "grade": 4,
+  "kun": "やぶれる",
   "answer": "敗れる",
   "reading": "やぶれる",
   "sentence": "決勝戦で敗れる",
@@ -776,6 +862,7 @@
  {
   "char": "梅",
   "grade": 4,
+  "kun": "うめ",
   "answer": "梅",
   "reading": "うめ",
   "sentence": "庭の梅の花がさく",
@@ -785,6 +872,7 @@
  {
   "char": "飯",
   "grade": 4,
+  "kun": "めし",
   "answer": "飯",
   "reading": "めし",
   "sentence": "昼飯をいっしょに食べる",
@@ -794,6 +882,7 @@
  {
   "char": "飛",
   "grade": 4,
+  "kun": "とばす",
   "answer": "飛ばす",
   "reading": "とばす",
   "sentence": "紙飛行機を遠くまで飛ばす",
@@ -803,6 +892,7 @@
  {
   "char": "必",
   "grade": 4,
+  "kun": "かならず",
   "answer": "必ず",
   "reading": "かならず",
   "sentence": "約束は必ず守る",
@@ -812,6 +902,7 @@
  {
   "char": "夫",
   "grade": 4,
+  "kun": "おっと",
   "answer": "夫",
   "reading": "おっと",
   "sentence": "おばの夫は医者だ",
@@ -821,6 +912,7 @@
  {
   "char": "付",
   "grade": 4,
+  "kun": "つける",
   "answer": "付ける",
   "reading": "つける",
   "sentence": "服に名前を付ける",
@@ -830,6 +922,7 @@
  {
   "char": "富",
   "grade": 4,
+  "kun": "とむ",
   "answer": "富む",
   "reading": "とむ",
   "sentence": "この町は自然に富む",
@@ -839,6 +932,7 @@
  {
   "char": "別",
   "grade": 4,
+  "kun": "わかれる",
   "answer": "別れる",
   "reading": "わかれる",
   "sentence": "駅で友だちと別れる",
@@ -848,6 +942,7 @@
  {
   "char": "辺",
   "grade": 4,
+  "kun": "あたり",
   "answer": "辺り",
   "reading": "あたり",
   "sentence": "この辺りはとても静かだ",
@@ -857,6 +952,7 @@
  {
   "char": "変",
   "grade": 4,
+  "kun": "かわる",
   "answer": "変わる",
   "reading": "かわる",
   "sentence": "信号が青に変わる",
@@ -866,6 +962,7 @@
  {
   "char": "便",
   "grade": 4,
+  "kun": "たより",
   "answer": "便り",
   "reading": "たより",
   "sentence": "遠くの友から便りがとどく",
@@ -875,6 +972,7 @@
  {
   "char": "包",
   "grade": 4,
+  "kun": "つつむ",
   "answer": "包む",
   "reading": "つつむ",
   "sentence": "プレゼントを紙で包む",
@@ -884,6 +982,7 @@
  {
   "char": "望",
   "grade": 4,
+  "kun": "のぞむ",
   "answer": "望む",
   "reading": "のぞむ",
   "sentence": "平和な世界を望む",
@@ -893,6 +992,7 @@
  {
   "char": "末",
   "grade": 4,
+  "kun": "すえ",
   "answer": "末",
   "reading": "すえ",
   "sentence": "三月の末に引っこす",
@@ -902,6 +1002,7 @@
  {
   "char": "満",
   "grade": 4,
+  "kun": "みたす",
   "answer": "満たす",
   "reading": "みたす",
   "sentence": "バケツを水で満たす",
@@ -911,6 +1012,7 @@
  {
   "char": "無",
   "grade": 4,
+  "kun": "ない",
   "answer": "無い",
   "reading": "ない",
   "sentence": "時間が無いので急ぐ",
@@ -920,6 +1022,7 @@
  {
   "char": "勇",
   "grade": 4,
+  "kun": "いさむ",
   "answer": "勇む",
   "reading": "いさむ",
   "sentence": "初めての試合に心が勇む",
@@ -929,6 +1032,7 @@
  {
   "char": "要",
   "grade": 4,
+  "kun": "かなめ",
   "answer": "要",
   "reading": "かなめ",
   "sentence": "かれはチームの要だ",
@@ -938,6 +1042,7 @@
  {
   "char": "養",
   "grade": 4,
+  "kun": "やしなう",
   "answer": "養う",
   "reading": "やしなう",
   "sentence": "体力を養う",
@@ -947,6 +1052,7 @@
  {
   "char": "浴",
   "grade": 4,
+  "kun": "あびる",
   "answer": "浴びる",
   "reading": "あびる",
   "sentence": "走った後にシャワーを浴びる",
@@ -956,6 +1062,7 @@
  {
   "char": "良",
   "grade": 4,
+  "kun": "よい",
   "answer": "良い",
   "reading": "よい",
   "sentence": "気持ちの良い朝だ",
@@ -965,6 +1072,7 @@
  {
   "char": "量",
   "grade": 4,
+  "kun": "はかる",
   "answer": "量る",
   "reading": "はかる",
   "sentence": "体重計で体重を量る",
@@ -974,6 +1082,7 @@
  {
   "char": "輪",
   "grade": 4,
+  "kun": "わ",
   "answer": "輪",
   "reading": "わ",
   "sentence": "みんなで輪になっておどる",
@@ -983,6 +1092,7 @@
  {
   "char": "類",
   "grade": 4,
+  "kun": "たぐい",
   "answer": "類",
   "reading": "たぐい",
   "sentence": "この類の本はよく読む",
@@ -992,6 +1102,7 @@
  {
   "char": "冷",
   "grade": 4,
+  "kun": "さめる",
   "answer": "冷める",
   "reading": "さめる",
   "sentence": "スープが冷める",
@@ -1001,6 +1112,7 @@
  {
   "char": "例",
   "grade": 4,
+  "kun": "たとえる",
   "answer": "例える",
   "reading": "たとえる",
   "sentence": "人生を旅に例える",
@@ -1010,6 +1122,7 @@
  {
   "char": "連",
   "grade": 4,
+  "kun": "つらなる",
   "answer": "連なる",
   "reading": "つらなる",
   "sentence": "遠くに山々が連なる",
@@ -1019,10 +1132,601 @@
  {
   "char": "老",
   "grade": 4,
+  "kun": "おいる",
   "answer": "老いる",
   "reading": "おいる",
   "sentence": "人はだれでも老いる",
   "prompt_form": "オいる",
   "meaning": "年をとる"
+ },
+ {
+  "char": "加",
+  "grade": 4,
+  "kun": "くわわる",
+  "answer": "加わる",
+  "reading": "くわわる",
+  "sentence": "新しいメンバーがチームに加わる",
+  "prompt_form": "クワわる",
+  "meaning": "仲間に入る"
+ },
+ {
+  "char": "果",
+  "grade": 4,
+  "kun": "はてる",
+  "answer": "果てる",
+  "reading": "はてる",
+  "sentence": "一日中歩いてつかれ果てる",
+  "prompt_form": "ハてる",
+  "meaning": "すっかり〜してしまう。終わる"
+ },
+ {
+  "char": "果",
+  "grade": 4,
+  "kun": "はて",
+  "answer": "果て",
+  "reading": "はて",
+  "sentence": "海の果てまで行ってみたい",
+  "prompt_form": "ハて",
+  "meaning": "いちばん終わりの所"
+ },
+ {
+  "char": "改",
+  "grade": 4,
+  "kun": "あらたまる",
+  "answer": "改まる",
+  "reading": "あらたまる",
+  "sentence": "新しい年に改まる",
+  "prompt_form": "アラタまる",
+  "meaning": "新しくなる"
+ },
+ {
+  "char": "覚",
+  "grade": 4,
+  "kun": "おぼえる",
+  "answer": "覚える",
+  "reading": "おぼえる",
+  "sentence": "九九を覚える",
+  "prompt_form": "オボえる",
+  "meaning": "わすれないようにする"
+ },
+ {
+  "char": "覚",
+  "grade": 4,
+  "kun": "さます",
+  "answer": "覚ます",
+  "reading": "さます",
+  "sentence": "大きな音で目を覚ます",
+  "prompt_form": "サます",
+  "meaning": "ねむりから起こす"
+ },
+ {
+  "char": "関",
+  "grade": 4,
+  "kun": "せき",
+  "answer": "関",
+  "reading": "せき",
+  "sentence": "昔、この山には関所があった",
+  "prompt_form": "セキ",
+  "meaning": "通る人を調べる所（関所）"
+ },
+ {
+  "char": "挙",
+  "grade": 4,
+  "kun": "あがる",
+  "answer": "挙がる",
+  "reading": "あがる",
+  "sentence": "質問はありますかと聞くと、手が次々と挙がる",
+  "prompt_form": "アがる",
+  "meaning": "はっきりしめされる。手があがる"
+ },
+ {
+  "char": "群",
+  "grade": 4,
+  "kun": "むれる",
+  "answer": "群れる",
+  "reading": "むれる",
+  "sentence": "すずめが電線に群れる",
+  "prompt_form": "ムれる",
+  "meaning": "たくさん集まる"
+ },
+ {
+  "char": "欠",
+  "grade": 4,
+  "kun": "かく",
+  "answer": "欠く",
+  "reading": "かく",
+  "sentence": "注意を欠くとけがをする",
+  "prompt_form": "カく",
+  "meaning": "足りない。なくす"
+ },
+ {
+  "char": "建",
+  "grade": 4,
+  "kun": "たつ",
+  "answer": "建つ",
+  "reading": "たつ",
+  "sentence": "駅前に新しいビルが建つ",
+  "prompt_form": "タつ",
+  "meaning": "建物ができる"
+ },
+ {
+  "char": "固",
+  "grade": 4,
+  "kun": "かたまる",
+  "answer": "固まる",
+  "reading": "かたまる",
+  "sentence": "冷ぞう庫でゼリーが固まる",
+  "prompt_form": "カタまる",
+  "meaning": "かたくなる"
+ },
+ {
+  "char": "固",
+  "grade": 4,
+  "kun": "かたい",
+  "answer": "固い",
+  "reading": "かたい",
+  "sentence": "二人は固い約束をする",
+  "prompt_form": "カタい",
+  "meaning": "しっかりしていて変わらない"
+ },
+ {
+  "char": "好",
+  "grade": 4,
+  "kun": "すく",
+  "answer": "好く",
+  "reading": "すく",
+  "sentence": "父はあっさりした味を好く",
+  "prompt_form": "スく",
+  "meaning": "すきだと思う（少し古い言い方）"
+ },
+ {
+  "char": "香",
+  "grade": 4,
+  "kun": "か",
+  "answer": "香",
+  "reading": "か",
+  "sentence": "新しい家は木の香がする",
+  "prompt_form": "カ",
+  "meaning": "よいにおい"
+ },
+ {
+  "char": "香",
+  "grade": 4,
+  "kun": "かおり",
+  "answer": "香り",
+  "reading": "かおり",
+  "sentence": "花のよい香りがする",
+  "prompt_form": "カオり",
+  "meaning": "よいにおい"
+ },
+ {
+  "char": "産",
+  "grade": 4,
+  "kun": "うまれる",
+  "answer": "産まれる",
+  "reading": "うまれる",
+  "sentence": "牧場で子馬が産まれる",
+  "prompt_form": "ウまれる",
+  "meaning": "動物の子が母の体から出てくる"
+ },
+ {
+  "char": "散",
+  "grade": 4,
+  "kun": "ちる",
+  "answer": "散る",
+  "reading": "ちる",
+  "sentence": "風で桜の花が散る",
+  "prompt_form": "チる",
+  "meaning": "ばらばらに落ちる"
+ },
+ {
+  "char": "散",
+  "grade": 4,
+  "kun": "ちらす",
+  "answer": "散らす",
+  "reading": "ちらす",
+  "sentence": "強い風が木の葉を散らす",
+  "prompt_form": "チらす",
+  "meaning": "ばらばらにする"
+ },
+ {
+  "char": "散",
+  "grade": 4,
+  "kun": "ちらかす",
+  "answer": "散らかす",
+  "reading": "ちらかす",
+  "sentence": "弟が部屋におもちゃを散らかす",
+  "prompt_form": "チらかす",
+  "meaning": "あちこちに、ばらばらに置く"
+ },
+ {
+  "char": "残",
+  "grade": 4,
+  "kun": "のこる",
+  "answer": "残る",
+  "reading": "のこる",
+  "sentence": "放課後、教室に三人残る",
+  "prompt_form": "ノコる",
+  "meaning": "あとにとどまる"
+ },
+ {
+  "char": "治",
+  "grade": 4,
+  "kun": "おさまる",
+  "answer": "治まる",
+  "reading": "おさまる",
+  "sentence": "国が平和に治まる",
+  "prompt_form": "オサまる",
+  "meaning": "世の中がしずかになる"
+ },
+ {
+  "char": "治",
+  "grade": 4,
+  "kun": "なおる",
+  "answer": "治る",
+  "reading": "なおる",
+  "sentence": "薬を飲んでかぜが治る",
+  "prompt_form": "ナオる",
+  "meaning": "病気やけががよくなる"
+ },
+ {
+  "char": "治",
+  "grade": 4,
+  "kun": "なおす",
+  "answer": "治す",
+  "reading": "なおす",
+  "sentence": "病院でけがを治す",
+  "prompt_form": "ナオす",
+  "meaning": "病気やけがをよくする"
+ },
+ {
+  "char": "初",
+  "grade": 4,
+  "kun": "はじめ",
+  "answer": "初め",
+  "reading": "はじめ",
+  "sentence": "月の初めに計画を立てる",
+  "prompt_form": "ハジめ",
+  "meaning": "物事のいちばん前"
+ },
+ {
+  "char": "初",
+  "grade": 4,
+  "kun": "はつ",
+  "answer": "初",
+  "reading": "はつ",
+  "sentence": "今年の初雪がふる",
+  "prompt_form": "ハツ",
+  "meaning": "はじめての（初雪＝その冬はじめてふる雪）"
+ },
+ {
+  "char": "焼",
+  "grade": 4,
+  "kun": "やく",
+  "answer": "焼く",
+  "reading": "やく",
+  "sentence": "トースターでパンを焼く",
+  "prompt_form": "ヤく",
+  "meaning": "火で熱を通す"
+ },
+ {
+  "char": "照",
+  "grade": 4,
+  "kun": "てる",
+  "answer": "照る",
+  "reading": "てる",
+  "sentence": "夏の日がかんかん照る",
+  "prompt_form": "テる",
+  "meaning": "日光がさす"
+ },
+ {
+  "char": "照",
+  "grade": 4,
+  "kun": "てれる",
+  "answer": "照れる",
+  "reading": "てれる",
+  "sentence": "ほめられて照れる",
+  "prompt_form": "テれる",
+  "meaning": "はずかしそうにする"
+ },
+ {
+  "char": "成",
+  "grade": 4,
+  "kun": "なる",
+  "answer": "成る",
+  "reading": "なる",
+  "sentence": "わたしたちの班は六人から成る",
+  "prompt_form": "ナる",
+  "meaning": "できている"
+ },
+ {
+  "char": "清",
+  "grade": 4,
+  "kun": "きよまる",
+  "answer": "清まる",
+  "reading": "きよまる",
+  "sentence": "神社にお参りすると心が清まる",
+  "prompt_form": "キヨまる",
+  "meaning": "きれいになる"
+ },
+ {
+  "char": "清",
+  "grade": 4,
+  "kun": "きよめる",
+  "answer": "清める",
+  "reading": "きよめる",
+  "sentence": "お参りの前に手を水で清める",
+  "prompt_form": "キヨめる",
+  "meaning": "きれいにする"
+ },
+ {
+  "char": "静",
+  "grade": 4,
+  "kun": "しず",
+  "answer": "静",
+  "reading": "しず",
+  "sentence": "花よめが静々と歩く",
+  "prompt_form": "シズ",
+  "meaning": "しずか（静々と＝しずかにゆっくりと）"
+ },
+ {
+  "char": "静",
+  "grade": 4,
+  "kun": "しずまる",
+  "answer": "静まる",
+  "reading": "しずまる",
+  "sentence": "先生が入ると教室が静まる",
+  "prompt_form": "シズまる",
+  "meaning": "しずかになる"
+ },
+ {
+  "char": "静",
+  "grade": 4,
+  "kun": "しずめる",
+  "answer": "静める",
+  "reading": "しずめる",
+  "sentence": "深呼吸をして心を静める",
+  "prompt_form": "シズめる",
+  "meaning": "しずかにする。落ち着かせる"
+ },
+ {
+  "char": "積",
+  "grade": 4,
+  "kun": "つむ",
+  "answer": "積む",
+  "reading": "つむ",
+  "sentence": "トラックに荷物を積む",
+  "prompt_form": "ツむ",
+  "meaning": "物の上に物をのせる"
+ },
+ {
+  "char": "折",
+  "grade": 4,
+  "kun": "おる",
+  "answer": "折る",
+  "reading": "おる",
+  "sentence": "色紙でつるを折る",
+  "prompt_form": "オる",
+  "meaning": "曲げて重ねる"
+ },
+ {
+  "char": "折",
+  "grade": 4,
+  "kun": "おり",
+  "answer": "折",
+  "reading": "おり",
+  "sentence": "またの折にお話しします",
+  "prompt_form": "オリ",
+  "meaning": "時。機会"
+ },
+ {
+  "char": "続",
+  "grade": 4,
+  "kun": "つづく",
+  "answer": "続く",
+  "reading": "つづく",
+  "sentence": "雨の日が一週間続く",
+  "prompt_form": "ツヅく",
+  "meaning": "とぎれずにつながる"
+ },
+ {
+  "char": "帯",
+  "grade": 4,
+  "kun": "おびる",
+  "answer": "帯びる",
+  "reading": "おびる",
+  "sentence": "夕方の空が赤みを帯びる",
+  "prompt_form": "オびる",
+  "meaning": "その様子を少しもつ"
+ },
+ {
+  "char": "低",
+  "grade": 4,
+  "kun": "ひくめる",
+  "answer": "低める",
+  "reading": "ひくめる",
+  "sentence": "図書館では声を低める",
+  "prompt_form": "ヒクめる",
+  "meaning": "低くする"
+ },
+ {
+  "char": "低",
+  "grade": 4,
+  "kun": "ひくまる",
+  "answer": "低まる",
+  "reading": "ひくまる",
+  "sentence": "夜になって気温が低まる",
+  "prompt_form": "ヒクまる",
+  "meaning": "低くなる"
+ },
+ {
+  "char": "伝",
+  "grade": 4,
+  "kun": "つたわる",
+  "answer": "伝わる",
+  "reading": "つたわる",
+  "sentence": "うわさがクラスに伝わる",
+  "prompt_form": "ツタわる",
+  "meaning": "知れわたる"
+ },
+ {
+  "char": "伝",
+  "grade": 4,
+  "kun": "つたう",
+  "answer": "伝う",
+  "reading": "つたう",
+  "sentence": "あせがほおを伝う",
+  "prompt_form": "ツタう",
+  "meaning": "物にそって動く"
+ },
+ {
+  "char": "飛",
+  "grade": 4,
+  "kun": "とぶ",
+  "answer": "飛ぶ",
+  "reading": "とぶ",
+  "sentence": "鳥が空高く飛ぶ",
+  "prompt_form": "トぶ",
+  "meaning": "空中を進む"
+ },
+ {
+  "char": "付",
+  "grade": 4,
+  "kun": "つく",
+  "answer": "付く",
+  "reading": "つく",
+  "sentence": "服にどろが付く",
+  "prompt_form": "ツく",
+  "meaning": "くっつく"
+ },
+ {
+  "char": "富",
+  "grade": 4,
+  "kun": "とみ",
+  "answer": "富",
+  "reading": "とみ",
+  "sentence": "祖先は一代で富を築いた",
+  "prompt_form": "トミ",
+  "meaning": "たくさんのお金や財産"
+ },
+ {
+  "char": "辺",
+  "grade": 4,
+  "kun": "べ",
+  "answer": "辺",
+  "reading": "べ",
+  "sentence": "夕方に海辺を散歩する",
+  "prompt_form": "ベ",
+  "meaning": "そのあたり（海辺＝海のそば）"
+ },
+ {
+  "char": "変",
+  "grade": 4,
+  "kun": "かえる",
+  "answer": "変える",
+  "reading": "かえる",
+  "sentence": "雨なので予定を変える",
+  "prompt_form": "カえる",
+  "meaning": "前とちがうようにする"
+ },
+ {
+  "char": "満",
+  "grade": 4,
+  "kun": "みちる",
+  "answer": "満ちる",
+  "reading": "みちる",
+  "sentence": "会場が笑いに満ちる",
+  "prompt_form": "ミちる",
+  "meaning": "いっぱいになる"
+ },
+ {
+  "char": "浴",
+  "grade": 4,
+  "kun": "あびせる",
+  "answer": "浴びせる",
+  "reading": "あびせる",
+  "sentence": "記者が選手に質問を浴びせる",
+  "prompt_form": "アびせる",
+  "meaning": "たくさんかける"
+ },
+ {
+  "char": "冷",
+  "grade": 4,
+  "kun": "つめたい",
+  "answer": "冷たい",
+  "reading": "つめたい",
+  "sentence": "冷たい水を飲む",
+  "prompt_form": "ツメたい",
+  "meaning": "温度が低い"
+ },
+ {
+  "char": "冷",
+  "grade": 4,
+  "kun": "ひえる",
+  "answer": "冷える",
+  "reading": "ひえる",
+  "sentence": "山の夜はよく冷える",
+  "prompt_form": "ヒえる",
+  "meaning": "温度が下がる"
+ },
+ {
+  "char": "冷",
+  "grade": 4,
+  "kun": "ひや",
+  "answer": "冷や",
+  "reading": "ひや",
+  "sentence": "こわくて冷やあせをかく",
+  "prompt_form": "ヒや",
+  "meaning": "つめたい（冷やあせ＝こわいときにかくあせ）"
+ },
+ {
+  "char": "冷",
+  "grade": 4,
+  "kun": "ひやす",
+  "answer": "冷やす",
+  "reading": "ひやす",
+  "sentence": "井戸水ですいかを冷やす",
+  "prompt_form": "ヒやす",
+  "meaning": "つめたくする"
+ },
+ {
+  "char": "冷",
+  "grade": 4,
+  "kun": "ひやかす",
+  "answer": "冷やかす",
+  "reading": "ひやかす",
+  "sentence": "仲のよい二人を冷やかす",
+  "prompt_form": "ヒやかす",
+  "meaning": "からかう"
+ },
+ {
+  "char": "冷",
+  "grade": 4,
+  "kun": "さます",
+  "answer": "冷ます",
+  "reading": "さます",
+  "sentence": "熱いお茶をふいて冷ます",
+  "prompt_form": "サます",
+  "meaning": "熱いものをぬるくする"
+ },
+ {
+  "char": "連",
+  "grade": 4,
+  "kun": "つらねる",
+  "answer": "連ねる",
+  "reading": "つらねる",
+  "sentence": "寄せ書きに名前を連ねる",
+  "prompt_form": "ツラねる",
+  "meaning": "いくつもならべる"
+ },
+ {
+  "char": "連",
+  "grade": 4,
+  "kun": "つれる",
+  "answer": "連れる",
+  "reading": "つれる",
+  "sentence": "散歩に犬を連れる",
+  "prompt_form": "ツれる",
+  "meaning": "いっしょに行く"
  }
 ]

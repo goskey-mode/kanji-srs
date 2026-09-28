@@ -529,10 +529,15 @@ test('一覧は登録先・単元で絞って返す／単元の一覧と重複�
 
 // ───── 漢字図鑑・ダッシュボード ─────
 
+// rows: [字, 学年, 順番, 熟語の答え, [訓読みの語の [答え, 読み], …]]
 function linkKanji(t, rows) {
-  const id = (answer) => { const it = answer ? t.q('SELECT item_id FROM items WHERE answer = ?', answer)[0] : null; return it ? it.item_id : ''; };
-  for (const [ch, grade, ord, answer, kun] of rows) {
-    t.env.DB.raw.prepare('INSERT INTO kanji (char, grade, ord, item_id, kun_item_id) VALUES (?, ?, ?, ?, ?)').run(ch, grade, ord, id(answer), id(kun));
+  const id = (answer, reading) => {
+    const it = answer ? t.q('SELECT item_id FROM items WHERE answer = ? AND (? IS NULL OR reading = ?)', answer, reading ?? null, reading ?? null)[0] : null;
+    return it ? it.item_id : '';
+  };
+  for (const [ch, grade, ord, answer, kun = []] of rows) {
+    t.env.DB.raw.prepare('INSERT INTO kanji (char, grade, ord, item_id) VALUES (?, ?, ?, ?)').run(ch, grade, ord, id(answer));
+    kun.forEach(([a, r], k) => t.env.DB.raw.prepare('INSERT INTO kanji_kun (char, item_id, ord) VALUES (?, ?, ?)').run(ch, id(a, r), k));
   }
 }
 
@@ -544,35 +549,37 @@ test('logic: 最長の連続日数（お休みチケットの日はつなぐが�
   ]), 3);
 });
 
-test('図鑑: 字ごとに音・訓の語の状態をまとめ（まだ／途中／知ってた／練習中／卒業）、マスを押すと両方の語が見られる', async () => {
+test('図鑑: 字ごとに熟語・訓読みの語（複数）の状態をまとめ（まだ／途中／知ってた／練習中／卒業）、マスを押すと全部の語が見られる', async () => {
   const t = setup();
   const N = { pool: 'new', unit: '漢字1年生' };
-  const K = { pool: 'new', unit: '訓読み1年生', prompt_form: 'ヒトつ' };
+  const K = { pool: 'new', unit: '訓読み1年生' };
   await t.api('addItems', A, [kanji('一日中雨がふる', '一日', 'いちにち', N), kanji('右手をあげる', '右手', 'みぎて', N),
-    kanji('雨天のため中止', '雨天', 'うてん', N), kanji('音楽を聞く', '音楽', 'おんがく', N), kanji('りんごを一つ食べる', '一つ', 'ひとつ', K)]);
-  linkKanji(t, [['一', 1, 0, '一日', '一つ'], ['右', 1, 1, '右手'], ['雨', 1, 2, '雨天'], ['円', 1, 3, ''], ['音', 1, 5, '音楽'], ['引', 2, 0, '']]);
+    kanji('雨天のため中止', '雨天', 'うてん', N), kanji('音楽を聞く', '音楽', 'おんがく', N),
+    kanji('りんごを一つ食べる', '一つ', 'ひとつ', { ...K, prompt_form: 'ヒトつ' }), kanji('ここで一休みしよう', '一', 'ひと', K)]);
+  linkKanji(t, [['一', 1, 0, '一日', [['一つ', 'ひとつ'], ['一', 'ひと']]], ['右', 1, 1, '右手'], ['雨', 1, 2, '雨天'], ['円', 1, 3, ''],
+    ['音', 1, 5, '音楽'], ['引', 2, 0, '']]);
   const card = (a, d) => t.q('SELECT c.card_id FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.answer = ? AND c.direction = ?', a, d)[0].card_id;
   await t.api('submitReviews', S, [rvn(card('一日', 'write'), 'o', '2026-10-01T10:00:00+09:00'), rvn(card('一日', 'read'), 'o', '2026-10-01T10:01:00+09:00'),
-    rvn(card('右手', 'write'), 'x', '2026-10-01T10:02:00+09:00')]);
+    rvn(card('一つ', 'write'), 'o', '2026-10-01T10:02:00+09:00'), rvn(card('一つ', 'read'), 'o', '2026-10-01T10:03:00+09:00'),
+    rvn(card('右手', 'write'), 'x', '2026-10-01T10:04:00+09:00')]);
   t.env.DB.raw.prepare("UPDATE cards SET state = 'spot', stage = 6 WHERE item_id = (SELECT item_id FROM items WHERE answer = '音楽')").run();
   const z = await t.api('getZukan', S);
-  // [字, 学年, マスの状態, 段階, 音の語, 訓の語（無い字は ''）]
-  assert.deepEqual(z.chars, [['一', 1, 'p', 0, 'k', 'n'], ['右', 1, 'l', 0, 'l', ''], ['雨', 1, 'n', 0, 'n', ''], ['円', 1, 'n', 0, 'n', ''],
-    ['音', 1, 'g', 0, 'g', ''], ['引', 2, 'n', 0, 'n', '']]);
+  // [字, 学年, マスの状態, 段階, 熟語の状態, 訓読み全体の状態（無い字は ''）, 終えた訓読みの数, 訓読みの数]
+  assert.deepEqual(z.chars, [['一', 1, 'p', 0, 'k', 'p', 1, 2], ['右', 1, 'l', 0, 'l', '', 0, 0], ['雨', 1, 'n', 0, 'n', '', 0, 0],
+    ['円', 1, 'n', 0, 'n', '', 0, 0], ['音', 1, 'g', 0, 'g', '', 0, 0], ['引', 2, 'n', 0, 'n', '', 0, 0]]);
   assert.deepEqual(z.count, { n: 3, p: 1, k: 0, l: 1, g: 1 });
   assert.equal(z.total, 6);
   assert.deepEqual(z.badges.map((b) => b.kind + b.n + ':' + b.got), ['grad10:false', 'grad50:false', 'grad100:false', 'grad300:false', 'streak7:false', 'streak30:false', 'streak100:false']);
-  // 訓の語もチャレンジで○ → 両方終えて「知ってた」
-  await t.api('submitReviews', S, [rvn(card('一つ', 'write'), 'o', '2026-10-01T10:03:00+09:00'), rvn(card('一つ', 'read'), 'o', '2026-10-01T10:04:00+09:00')]);
-  assert.deepEqual((await t.api('getZukan', S)).chars[0], ['一', 1, 'k', 0, 'k', 'k']);
+  // 訓読みのもう1語（一＝ひと）も○ → 全部終えて「知ってた」
+  await t.api('submitReviews', S, [rvn(card('一', 'write'), 'o', '2026-10-01T10:05:00+09:00'), rvn(card('一', 'read'), 'o', '2026-10-01T10:06:00+09:00')]);
+  assert.deepEqual((await t.api('getZukan', S)).chars[0], ['一', 1, 'k', 0, 'k', 'k', 2, 2]);
   const info = await t.api('getKanjiInfo', S, '一');
-  assert.deepEqual(info.words.map((w) => w.kind + ':' + w.answer + ':' + w.cards.map((c) => c.direction + '=' + c.state).join(',')),
-    ['on:一日:write=known,read=known', 'kun:一つ:write=known,read=known']);
+  assert.deepEqual(info.words.map((w) => w.kind + ':' + w.answer + '=' + w.reading + ':' + w.cards.map((c) => c.direction + '=' + c.state).join(',')),
+    ['on:一日=いちにち:write=known,read=known', 'kun:一つ=ひとつ:write=known,read=known', 'kun:一=ひと:write=known,read=known']);
   const right = await t.api('getKanjiInfo', S, '右');
   assert.equal(right.words.length, 1);
   assert.equal(right.words[0].pool, 'mistake');
-  const none = await t.api('getKanjiInfo', S, '円');
-  assert.deepEqual(none.words, []);
+  assert.deepEqual((await t.api('getKanjiInfo', S, '円')).words, []);
   await assert.rejects(t.api('getKanjiInfo', S, '犬'), /NOT_FOUND/);
   await assert.rejects(t.api('getKanjiInfo', S, ''), /BAD_ARGS/);
   // 問題を削除したら「まだ」に戻る
@@ -646,4 +653,27 @@ test('チャレンジ: 順番はランダム。書きか読みを直近3日以�
   const later = new Set();
   for (let k = 0; k < 20; k++) later.add((await t.api('getChallenge', S, '漢字1年生', 1, 'read'))[0].answer);
   assert.ok([...later].some((a) => !rest.includes(a)));
+});
+
+test('チャレンジ: 同じ字の語（熟語・訓読み）は1回に1つ、直近3日に同じ字を解いたら後回し', async () => {
+  const t = setup();
+  const K = { pool: 'new', unit: '訓読み1年生' };
+  await t.api('addItems', A, [kanji('ラジオの音量を下げる', '下げる', 'さげる', { ...K, prompt_form: 'サげる' }),
+    kanji('熱が下がる', '下がる', 'さがる', { ...K, prompt_form: 'サがる' }), kanji('荷物を下ろす', '下ろす', 'おろす', { ...K, prompt_form: 'オろす' }),
+    kanji('手を上げる', '上げる', 'あげる', { ...K, prompt_form: 'アげる' }), kanji('川を下る', '下る', 'くだる', { ...K, prompt_form: 'クダる' })]);
+  linkKanji(t, [['下', 1, 0, '', [['下げる', 'さげる'], ['下がる', 'さがる'], ['下ろす', 'おろす'], ['下る', 'くだる']]], ['上', 1, 1, '', [['上げる', 'あげる']]]]);
+  for (let k = 0; k < 10; k++) {
+    const ch = await t.api('getChallenge', S, '訓読み1年生', 10, 'write');
+    assert.equal(ch.length, 2);                                   // 「下」の4語から1つ＋「上」
+    assert.equal(ch.filter((c) => c.answer.startsWith('下')).length, 1);
+    assert.equal(ch[0].kchar, undefined);
+  }
+  // 「下げる」を解く → 3日間は「下」の語が後回し（「上」が先）
+  const sage = t.q("SELECT c.card_id FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.answer = '下げる' AND c.direction = 'write'")[0].card_id;
+  await t.api('submitReviews', S, [rvn(sage, 'o', '2026-10-01T10:00:00+09:00')]);
+  for (let k = 0; k < 10; k++) assert.equal((await t.api('getChallenge', S, '訓読み1年生', 1, 'read'))[0].answer, '上げる');
+  t.setNow('2026-10-04T10:00:00+09:00');
+  const later = new Set();
+  for (let k = 0; k < 20; k++) later.add((await t.api('getChallenge', S, '訓読み1年生', 1, 'read'))[0].answer);
+  assert.ok([...later].some((a) => a.startsWith('下')));
 });
