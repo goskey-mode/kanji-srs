@@ -448,8 +448,14 @@ test('新しい問題: 毎日の復習には出ず、チャレンジで○は覚
   assert.deepEqual(reads.map((c) => c.answer).sort(), ['五感', '円満', '千差万別'].sort());
   await t.api('submitReviews', S, [rvn(reads.find((c) => c.answer === '円満').card_id, 'o', '2026-10-01T10:05:00+09:00')]);
   assert.equal((await t.api('listItems', A)).find((i) => i.answer === '円満').stats.state, 'known'); // 書き・読みとも○
-  // チャレンジの分は今日の10分の枠・今日の新しいカード数・「もう一回」に数えない
-  assert.equal((await t.api('getToday', S)).cards.length, 1);
+  // チャレンジの分は今日の10分の枠・今日の新しいカード数に数えない
+  const today = await t.api('getToday', S);
+  assert.equal(today.cards.length, 1);
+  // 毎日の分を終えたら、「もう一回」にはチャレンジで△×だった問題も入る（○で覚えていた語は入らない）
+  await t.api('submitReviews', S, [rv(today.cards[0].card_id, 'x', '2026-10-01T10:10:00+09:00')]);
+  await t.api('finishDay', S, { day: '2026-10-01', cards_done: 1, seconds: 20 });
+  assert.deepEqual((await t.api('getToday', S)).practice.map((c) => c.answer + ':' + c.direction).sort(),
+    ['五感:write', '千差万別:write', '講義:write'].sort());
   // 翌日、チャレンジで間違えた書き2枚が「まちがえた問題」として復習に出る。まだ解いていない読みは毎日の復習には出ない
   t.setNow('2026-10-02T10:00:00+09:00');
   const next = await t.api('getToday', S);

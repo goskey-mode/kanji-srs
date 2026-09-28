@@ -251,12 +251,13 @@ async function getToday(c) {
   // 最後まで終えた日も、同じ日に何度でも取り組めるようにする
   //   extra: まだ出していない問題（予算を超えた復習と、今日の新しいカードの残り枠）。解けば記録する
   //   practice: 今日解いた問題。記録しない練習用（同じ日に何度も記録すると復習の間隔が進みすぎるため）
+  //             チャレンジで△×だった問題も入れる（○で「覚えていた」になったものは入れない）
   let extra = [], practice = [];
   if (finished) {
     const [dueAll, freshAll, practiced] = await c.db.batch([dueStmt, freshStmt,
       c.db.prepare(`SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM reviews r
         JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id
-        WHERE r.study_day = ? AND i.status = 'active' AND r.mode = 'daily' GROUP BY c.card_id ORDER BY MIN(r.answered_at)`).bind(today)]);
+        WHERE r.study_day = ? AND i.status = 'active' AND c.state <> 'known' GROUP BY c.card_id ORDER BY MIN(r.answered_at)`).bind(today)]);
     extra = dueAll.results.concat(freshAll.results).filter((r) => {
       if (usedItems.has(r.item_id)) return false;
       usedItems.add(r.item_id);
