@@ -208,7 +208,9 @@ async function getToday(c) {
     `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
      WHERE i.status = 'active' AND i.registered_pool = 'mistake' AND c.state = 'new'
      ORDER BY CASE WHEN i.origin IN ('塾', '模試') THEN 0 ELSE 1 END, i.created_at, i.item_id,
-       CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT ?`).bind(allowance);
+       CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT 500`);
+  // 候補は枠の数より多めに取り、「同じ語は1日1枚」で外したあとに枠（allowance）の数だけ使う。
+  // 先に LIMIT で枠の数だけ取ると、今日すでに出ている語の読みカードで枠が埋まり、ほかの問題が出なくなる
   if (!done) {
     let spent = 0;
     for (const r of spentRes.results) spent += cost(r.direction, !!r.photo_q, st);
@@ -224,6 +226,7 @@ async function getToday(c) {
       const fresh = await freshStmt.all();
       const introduced = [];
       for (const r of fresh.results) {
+        if (introduced.length >= allowance) break;
         if (usedItems.has(r.item_id)) continue;
         const k = cost(r.direction, !!r.photo_q, st);
         if (k > budget && !(spent === 0 && queue.length === 0)) break;
@@ -258,11 +261,12 @@ async function getToday(c) {
       c.db.prepare(`SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM reviews r
         JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id
         WHERE r.study_day = ? AND i.status = 'active' AND c.state <> 'known' GROUP BY c.card_id ORDER BY MIN(r.answered_at)`).bind(today)]);
-    extra = dueAll.results.concat(freshAll.results).filter((r) => {
+    const pick = (r) => {
       if (usedItems.has(r.item_id)) return false;
       usedItems.add(r.item_id);
       return true;
-    });
+    };
+    extra = dueAll.results.filter(pick).concat(freshAll.results.filter(pick).slice(0, allowance));
     practice = practiced.results;
   }
   const s = streak(dayRows, today, st);

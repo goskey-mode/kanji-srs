@@ -299,6 +299,20 @@ test('0問で自動的に終えた日でも、あとから登録した問題は�
   assert.equal((await t.api('getToday', S)).done, true);
 });
 
+test('今日すでに出ている語の読みカードで、新しいカードの枠が埋まらない', async () => {
+  const t = setup();
+  const R = { make_read: true }; // 本番と同じく読みカードも作る
+  // 朝: 2語を登録して、書き2枚を出し始める（読みはまだ new のまま、登録順では先に並ぶ）
+  await t.api('addItems', A, [kanji('貿易がさかんな港町', '貿易', 'ぼうえき', R), kanji('険しい山道', '険しい', 'けわしい', R)]);
+  assert.equal((await t.api('getToday', S)).cards.length, 2);
+  // あとから2問を追加（枠は残り2枚）。どちらも今日のうちに出る
+  t.setNow('2026-10-01T15:00:00+09:00'); // 本番と同じく、あとから登録した問題は登録時刻が後になる
+  await t.api('addItems', A, [kanji('会場を設ける', '設ける', 'もうける', R), { type: 'B', subject: '算数', photo_q: 'p1', origin: '塾' }]);
+  const later = await t.api('getToday', S);
+  assert.equal(later.cards.length, 4);
+  assert.deepEqual(later.cards.map((c) => c.answer || c.type).sort(), ['B', '設ける', '貿易', '険しい'].sort());
+});
+
 test('削除した問題を解いた時間は今日の予算に数えない', async () => {
   const t = setup();
   const list = [];
