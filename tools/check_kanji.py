@@ -1,4 +1,4 @@
-"""data/kanji.json（1026字の例文データ）の自動チェック。
+"""data/kanji*.json（1026字の例文データ）の自動チェック。
 
   python tools/check_kanji.py [--grade N] [--report path.md]
 
@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-KANJI_RE = re.compile(r'[一-鿿々]')
+KANJI_RE = re.compile(r'[一-鿿]')  # 「々」はくり返しの記号なので数えない
 HIRA_RE = re.compile(r'^[ぁ-ゟー]+$')
 KANA_RE = re.compile(r'^[ぁ-ゟァ-ヿー]+$')
 
@@ -65,7 +65,10 @@ def main():
     grades = json.loads((ROOT / 'data' / 'grades.json').read_text(encoding='utf-8'))['grades']
     grade_of = {c: int(g) for g, chars in grades.items() for c in chars}
     order = {c: i for i, c in enumerate(''.join(grades[str(g)] for g in range(1, 7)))}
-    data = json.loads((ROOT / 'data' / 'kanji.json').read_text(encoding='utf-8'))
+    # data/kanji.json（1年生）と data/kanji_g2.json … kanji_g6.json（学年ごと）をまとめて読む
+    data = []
+    for f in sorted((ROOT / 'data').glob('kanji*.json')):
+        data += json.loads(f.read_text(encoding='utf-8'))
 
     import fugashi
     tagger = fugashi.Tagger()
