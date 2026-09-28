@@ -446,8 +446,9 @@ test('新しい問題: 毎日の復習には出ず、チャレンジで○は覚
   assert.deepEqual(await t.api('getChallengeDecks', S), [
     { deck: '漢字1年生', n: 6, write: 3, read: 3, single: 0 }, { deck: '作文表現', n: 1, write: 0, read: 0, single: 1 }]);
   const ch = await t.api('getChallenge', S, '漢字1年生', 10, 'write');
-  assert.deepEqual(ch.map((c) => c.answer + ':' + c.direction), ['円満:write', '五感:write', '千差万別:write']);
-  const r = await t.api('submitReviews', S, [rvn(ch[0].card_id, 'o', '2026-10-01T10:00:00+09:00'), rvn(ch[1].card_id, 't', '2026-10-01T10:01:00+09:00'), rvn(ch[2].card_id, 'x', '2026-10-01T10:02:00+09:00')]);
+  assert.deepEqual(ch.map((c) => c.answer + ':' + c.direction).sort(), ['円満:write', '五感:write', '千差万別:write'].sort());
+  const w = (a) => ch.find((c) => c.answer === a).card_id; // 出る順番はランダム
+  const r = await t.api('submitReviews', S, [rvn(w('円満'), 'o', '2026-10-01T10:00:00+09:00'), rvn(w('五感'), 't', '2026-10-01T10:01:00+09:00'), rvn(w('千差万別'), 'x', '2026-10-01T10:02:00+09:00')]);
   assert.equal(r.applied, 3);
   assert.equal(r.toMistake, 2);
   const list = await t.api('listItems', A);
@@ -614,4 +615,29 @@ test('ダッシュボード: 理由別・科目別・改善／苦手・カレン
   assert.deepEqual(d.timing.find((x) => x.kind === 'write'), { kind: 'write', n: 9, median: 20, setting: 20 });
   assert.deepEqual(d.timing.find((x) => x.kind === 'single'), { kind: 'single', n: 1, median: 10, setting: 15 });
   await assert.rejects(t.api('getDashboard', S), /./); // 親だけ
+});
+
+test('チャレンジ: 順番はランダム。書きか読みを直近3日以内に解いた語は後回し', async () => {
+  const t = setup();
+  const N = { pool: 'new', unit: '漢字1年生' };
+  const words = ['一日', '右手', '雨天', '円形', '王様', '音楽', '下山', '火事', '花火', '貝がら'];
+  await t.api('addItems', A, words.map((a, k) => kanji('例文' + k + 'の' + a, a, 'よみ', N)));
+  // ランダム: 20回取ると、先頭の語は1種類に固まらない
+  const firsts = new Set();
+  for (let k = 0; k < 20; k++) firsts.add((await t.api('getChallenge', S, '漢字1年生', 3, 'write'))[0].answer);
+  assert.ok(firsts.size > 1);
+  // 8語の書きを解く → 読みを取ると、まだ解いていない2語が先に出て、解いた8語は後ろ
+  const ch = await t.api('getChallenge', S, '漢字1年生', 10, 'write');
+  const done = ch.slice(0, 8);
+  await t.api('submitReviews', S, done.map((c, k) => rvn(c.card_id, 'o', '2026-10-01T10:0' + k + ':00+09:00')));
+  const rest = words.filter((a) => !done.some((c) => c.answer === a)).sort();
+  const reads = await t.api('getChallenge', S, '漢字1年生', 10, 'read');
+  assert.equal(reads.length, 10); // ほかに無ければ、3日以内の語も出す
+  assert.deepEqual(reads.slice(0, 2).map((c) => c.answer).sort(), rest);
+  assert.deepEqual((await t.api('getChallenge', S, '漢字1年生', 10, 'mix')).slice(0, 2).map((c) => c.answer).sort(), rest);
+  // 3日後（10/1 に解いた語は 10/4 から）は後回しにしない
+  t.setNow('2026-10-04T10:00:00+09:00');
+  const later = new Set();
+  for (let k = 0; k < 20; k++) later.add((await t.api('getChallenge', S, '漢字1年生', 1, 'read'))[0].answer);
+  assert.ok([...later].some((a) => !rest.includes(a)));
 });

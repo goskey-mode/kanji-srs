@@ -751,14 +751,20 @@ async function getChallengeDecks(c) {
 }
 
 // dir: 'write'（書きだけ）/ 'read'（読みだけ）/ 'mix'（まぜる）。漢字以外の問題（single）はどれでも出す
+// 出す順番はランダム。ただし、書きか読みを直近 RECENT_DAYS 日以内に解いた語は後回しにする
+// （書きの答えの画面で見たばかりの語の読みが続けて出ると、覚えているかの確認にならないため）
+const RECENT_DAYS = 3;
 async function getChallenge(c, role, deck, limit, dir) {
   const n = Math.max(1, Math.min(50, Math.floor(Number(limit) || 10)));
   dir = ['write', 'read'].includes(dir) ? dir : 'mix';
+  const st = await settings(c);
+  const since = addDays(studyDay(c.now, st.day_start_hour), -(RECENT_DAYS - 1));
   const { results } = await c.db.prepare(
     `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
      WHERE i.status = 'active' AND i.registered_pool = 'new' AND c.state = 'new' AND ${DECK} = ?1
        AND (?2 = 'mix' OR c.direction = 'single' OR c.direction = ?2)
-     ORDER BY i.created_at, i.item_id, c.direction DESC LIMIT ?3`).bind(String(deck || ''), dir, n * 2 + 2).all();
+     ORDER BY EXISTS (SELECT 1 FROM cards k JOIN reviews r ON r.card_id = k.card_id WHERE k.item_id = i.item_id AND r.study_day >= ?4),
+       RANDOM() LIMIT ?3`).bind(String(deck || ''), dir, n * 2 + 2, since).all();
   // 同じ語は1回に1枚だけ（読みの問題には書きの答えがそのまま出るため）。まぜるときは語ごとに書き・読みをランダムに選ぶ
   const byItem = new Map();
   for (const r of results) (byItem.get(r.item_id) || byItem.set(r.item_id, []).get(r.item_id)).push(r);
