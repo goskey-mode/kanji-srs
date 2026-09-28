@@ -193,9 +193,19 @@
     ];
     if (t.done || !n) {
       main.push(h('div', { class: 'today', text: '今日の分はおわり！' }));
+      // 終わったあとも、同じ日に何度でも取り組める
+      var extra = t.extra || [], practice = t.practice || [];
+      if (extra.length) {
+        main.push(h('button', { class: 'btn big', onclick: function () { beginSession(extra); } },
+          ['つづきをやる（' + extra.length + '問・やく' + Math.max(1, Math.round(t.extraEstSeconds / 60)) + '分）']));
+      }
+      if (practice.length) {
+        main.push(h('button', { class: 'btn ' + (extra.length ? 'ghost' : 'big'), onclick: function () { beginPractice(practice, 'home'); } },
+          ['今日の問題をもう一回（' + practice.length + '問・きろくなし）']));
+      }
     } else {
       main.push(h('div', { class: 'today' }, ['今日の問題 ', h('b', { text: n + '問' }), '（やく ' + mins + '分）']));
-      main.push(h('button', { class: 'btn big', text: 'はじめる', onclick: beginSession }));
+      main.push(h('button', { class: 'btn big', text: 'はじめる', onclick: function () { beginSession(t.cards); } }));
     }
     var fresh = t.cards.filter(function (c) { return c.stage === 0 && c.state === 'learning'; }).length;
     main.push(h('div', { class: 'chips' }, [
@@ -205,11 +215,20 @@
     setScreen([h('span', { text: 'かんじれんしゅう' }), h('span', { class: 'grow' }), h('span', { id: 'sync', class: 'muted', text: syncLabel() })], main);
   }
 
-  function beginSession() {
+  function beginSession(list) {
+    state.cards = list;
     state.idx = 0;
     state.results = [];
     state.startedAt = Date.now();
     showQuestion();
+  }
+
+  // 記録しない練習。home: ホームの「今日の問題をもう一回」から / done: おわりの画面の「×の問題をもう一回」から
+  function beginPractice(list, from) {
+    state.practice = list;
+    state.practiceFrom = from;
+    state.idx = 0;
+    showQuestion(true);
   }
 
   function progressBar(label) {
@@ -277,7 +296,7 @@
     if (practice) {
       foot = [h('button', { class: 'btn big', text: state.idx + 1 < list.length ? 'つぎへ' : 'おわる', onclick: function () {
         state.idx++;
-        if (state.idx < list.length) showQuestion(true); else showDone();
+        if (state.idx < list.length) showQuestion(true); else if (state.practiceFrom === 'home') start(); else showDone();
       } })];
     } else {
       var grade = function (r) {
@@ -331,8 +350,7 @@
     ];
     if (state.practice.length) {
       main.push(h('button', { class: 'btn big', text: '×の' + state.practice.length + '問をもう一回', onclick: function () {
-        state.idx = 0;
-        showQuestion(true);
+        beginPractice(state.practice, 'done');
       } }));
       main.push(h('div', { class: 'hint', text: 'もう一回はれんしゅうなので、きろくには入りません' }));
     }

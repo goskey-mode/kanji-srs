@@ -38,6 +38,26 @@ export function schedule(state, stage, result, day) {
   return { state: 'learning', stage: 0, due: addDays(day, 1), lapse: true };
 }
 
+const RESULT_CODE = { '○': 'o', '△': 't', '×': 'x' };
+
+// 残っている解答の記録を古い順にたどり直して、カードの状態を作り直す（記録を消したとき用）。
+// reviews: [{review_id, result: '○'|'△'|'×', study_day, answered_at}]（古い順）
+// 戻り値: { card: {state, stage, due, reps, lapses, last_result, last_reviewed_at, introduced_on}, stages: {review_id: [before, after]} }
+export function replay(reviews) {
+  const card = { state: 'new', stage: 0, due: '', reps: 0, lapses: 0, last_result: '', last_reviewed_at: '', introduced_on: '' };
+  const stages = {};
+  for (const r of reviews) {
+    if (card.state === 'new') Object.assign(card, { state: 'learning', stage: 0, introduced_on: r.study_day });
+    if (card.state === 'retired') break;
+    const before = card.stage;
+    const n = schedule(card.state, card.stage, RESULT_CODE[r.result], r.study_day);
+    Object.assign(card, { state: n.state, stage: n.stage, due: n.due, reps: card.reps + 1, lapses: card.lapses + (n.lapse ? 1 : 0),
+      last_result: r.result, last_reviewed_at: r.answered_at });
+    stages[r.review_id] = [before, n.stage];
+  }
+  return { card, stages };
+}
+
 export function cost(direction, hasPhoto, st) {
   if (direction === 'write') return st.sec_write;
   if (direction === 'read') return st.sec_read;

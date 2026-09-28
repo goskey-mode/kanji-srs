@@ -474,14 +474,24 @@
       } }));
     });
     var hist = h('table', { class: 'hist' }, [h('tr', {}, [h('td', { class: 'muted', text: '履歴を読み込み中…' })])]);
-    call('itemHistory', i.item_id).then(function (rows) {
-      if (!rows.length) { hist.replaceChildren(h('tr', {}, [h('td', { class: 'muted', text: 'まだ解いていません' })])); return; }
-      hist.replaceChildren.apply(hist, rows.map(function (r) {
-        return h('tr', {}, [h('td', { text: r.study_day }), h('td', { text: r.direction === 'write' ? '書き' : r.direction === 'read' ? '読み' : '' }),
-          h('td', { class: r.result === '○' ? 'ok' : r.result === '△' ? 'mid' : 'ng', text: r.result }),
-          h('td', { class: 'muted', text: '段階 ' + r.stage_before + '→' + r.stage_after }), h('td', { class: 'muted', text: r.duration_sec + '秒' })]);
-      }));
-    }).catch(function () {});
+    function loadHistory() {
+      call('itemHistory', i.item_id).then(function (rows) {
+        if (!rows.length) { hist.replaceChildren(h('tr', {}, [h('td', { class: 'muted', text: 'まだ解いていません' })])); return; }
+        hist.replaceChildren.apply(hist, rows.map(function (r) {
+          // 1件ずつ消す（テストで解いた記録を取り消す）。残りの記録からカードの状態を作り直す
+          var rm = h('button', { class: 'chip', title: 'この記録を消す', text: '🗑', onclick: function () {
+            if (!confirm(r.study_day + ' の「' + r.result + '」の記録を消しますか？')) return;
+            rm.disabled = true;
+            call('deleteReviews', [r.review_id]).then(function () { items = null; KS.toast('記録を消しました'); loadHistory(); }, fail);
+          } });
+          return h('tr', {}, [h('td', { text: r.study_day }), h('td', { text: r.direction === 'write' ? '書き' : r.direction === 'read' ? '読み' : '' }),
+            h('td', { class: r.result === '○' ? 'ok' : r.result === '△' ? 'mid' : 'ng', text: r.result }),
+            h('td', { class: 'muted', text: '段階 ' + r.stage_before + '→' + r.stage_after }), h('td', { class: 'muted', text: r.duration_sec + '秒' }),
+            h('td', {}, [rm])]);
+        }));
+      }).catch(function () {});
+    }
+    loadHistory();
 
     function done(msg) { dlg.close(); dlg.remove(); items = null; KS.toast(msg); render(); }
     var save = h('button', { class: 'btn', text: '保存', onclick: function () {
@@ -494,8 +504,12 @@
       call('setStatus', i.item_id, i.status === 'suspended' ? 'active' : 'suspended').then(function () { done(i.status === 'suspended' ? '再開しました' : '停止しました'); }, fail);
     } });
     var del = h('button', { class: 'btn danger', text: '削除', onclick: function () {
-      if (!confirm('この問題を削除しますか？（スプレッドシート上では status=deleted になり、行は残ります）')) return;
+      if (!confirm('この問題を削除しますか？（一覧と出題から外れます。解いた記録はデータとして残ります）')) return;
       call('setStatus', i.item_id, 'deleted').then(function () { done('削除しました'); }, fail);
+    } });
+    var resetBtn = h('button', { class: 'btn danger', text: 'この問題の記録をすべて消す（未出題に戻す）', onclick: function () {
+      if (!confirm('この問題の解いた記録をすべて消して、未出題に戻しますか？')) return;
+      call('resetItem', i.item_id).then(function (r) { done('記録を' + r.deleted + '件消しました'); }, fail);
     } });
     dlg.appendChild(h('div', { class: 'form' }, [
       h('div', { class: 'q', style: 'font-size:17px' }, label(i)),
@@ -505,7 +519,8 @@
       h('div', { class: 'actions' }, [save, pause, del]),
       h('div', { class: 'muted', style: 'font-size:13px', text: '解答の履歴（新しい順・最大30件）' }),
       hist,
-      h('button', { class: 'btn ghost', text: '閉じる', onclick: function () { dlg.close(); dlg.remove(); } })
+      resetBtn,
+      h('button', { class: 'btn ghost', text: '閉じる', onclick: function () { dlg.close(); dlg.remove(); items = null; render(); } })
     ])));
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -539,6 +554,7 @@
           }))
           : h('div', { class: 'empty', text: 'ありません' }),
         photoMeter(o.photos),
+        resetDayBox(o.today),
         exportBox()
       );
     }).catch(fail);
@@ -557,6 +573,23 @@
           text: mb(p.bytes) + 'MB / ' + mb(p.limit) + 'MB' + (pct >= 80 ? '（残りわずか。写真用データベースの追加が必要です）' : '') })
       ])
     ]);
+  }
+
+  // ある日の記録をまとめて消す（テストで解いた日を取り消す）。その日の「終えた」記録と連続日数も元に戻る
+  function resetDayBox(todayStr) {
+    var d = h('input', { class: 'input', type: 'date', value: todayStr });
+    var btn = h('button', { class: 'btn danger', text: 'この日の記録を消す', onclick: function () {
+      if (!d.value) return;
+      if (!confirm(d.value + ' に解いた記録をすべて消しますか？（その日の「おわり」と連続日数の記録も取り消され、その日の問題はもう一度出題されます）')) return;
+      btn.disabled = true;
+      call('resetDay', d.value).then(function (r) {
+        items = null;
+        KS.toast(d.value + ' の記録を' + r.deleted + '件消しました');
+        render();
+      }, function (e) { btn.disabled = false; fail(e); });
+    } });
+    return h('div', {}, [h('div', { class: 'sec', text: '解いた記録の取り消し（テストで解いた日など）' }),
+      h('div', { class: 'form', style: 'flex-direction:row' }, [d, btn])]);
   }
 
   // CSV 書き出し（Excel で文字化けしないよう BOM 付き UTF-8）

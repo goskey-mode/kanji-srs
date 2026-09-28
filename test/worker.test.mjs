@@ -314,3 +314,91 @@ test('削除した問題のカードは「今日の新しいカード4枚」に�
   await t.api('addItems', A, [kanji('例一の漢字', '漢字', 'かんじ'), kanji('例二の音楽', '音楽', 'おんがく'), kanji('例三の講義', '講義', 'こうぎ'), kanji('例四の貿易', '貿易', 'ぼうえき')]);
   assert.equal((await t.api('getToday', S)).cards.length, 4);
 });
+
+test('終えたあとも同じ日に「つづき」と「もう一回」ができる', async () => {
+  const t = setup();
+  // 新しいカードの上限を超える6枚を登録し、今日は4枚だけ出す
+  const list = [];
+  for (let i = 0; i < 6; i++) list.push(kanji('例' + i + 'の漢字', '漢字', 'かんじ'));
+  await t.api('addItems', A, list);
+  const first = await t.api('getToday', S);
+  assert.equal(first.cards.length, 4);
+  assert.equal(first.extra.length, 0); // 終える前は出さない
+  await t.api('submitReviews', S, first.cards.map((c, i) => rv(c.card_id, i === 0 ? 'x' : 'o', '2026-10-01T10:0' + i + ':00+09:00')));
+  await t.api('finishDay', S, { day: '2026-10-01', cards_done: 4, seconds: 80 });
+  const after = await t.api('getToday', S);
+  assert.equal(after.done, true);
+  assert.equal(after.cards.length, 0);
+  assert.equal(after.extra.length, 0);       // 新しいカードの枠（4枚）は使い切った
+  assert.equal(after.practice.length, 4);    // 今日解いた4枚は記録なしで練習できる
+  // 親があとから上限を増やしたら、終えたあとでも「つづき」に出る
+  t.env.DB.raw.prepare("UPDATE settings SET value = '6' WHERE key = 'new_per_day'").run();
+  const more = await t.api('getToday', S);
+  assert.equal(more.extra.length, 2);
+  assert.equal(more.extraEstSeconds, 40);
+  // 「つづき」の新しいカードはそのまま解ける（ここで出し始めたことになる）
+  const r = await t.api('submitReviews', S, more.extra.map((c, i) => rv(c.card_id, 'o', '2026-10-01T11:0' + i + ':00+09:00')));
+  assert.equal(r.applied, 2);
+  assert.equal(t.q("SELECT COUNT(*) AS n FROM cards WHERE introduced_on = '2026-10-01'")[0].n, 6);
+  await t.api('finishDay', S, { day: '2026-10-01', cards_done: 2, seconds: 40 });
+  assert.deepEqual(t.q("SELECT cards_done, seconds FROM days WHERE study_day = '2026-10-01'")[0], { cards_done: 6, seconds: 120 });
+  const last = await t.api('getToday', S);
+  assert.equal(last.extra.length, 0);
+  assert.equal(last.practice.length, 6);
+  assert.equal(last.streak, 1);
+});
+
+test('記録の削除: 1件ずつ・問題ごと・日ごと。残りの記録からカードを作り直す', async () => {
+  const t = setup();
+  await t.api('addItems', A, [kanji('大学の講義を受ける', '講義', 'こうぎ'), kanji('試合に負ける', '負ける', 'まける')]);
+  const [c1, c2] = (await t.api('getToday', S)).cards.map((c) => c.card_id);
+  // c1: 10/1 ○ → 10/2 × → 10/3 ○
+  await t.api('submitReviews', S, [rv(c1, 'o', '2026-10-01T10:00:00+09:00'), rv(c2, 'o', '2026-10-01T10:01:00+09:00')]);
+  await t.api('finishDay', S, { day: '2026-10-01', cards_done: 2 });
+  t.setNow('2026-10-02T10:00:00+09:00');
+  await t.api('submitReviews', S, [rv(c1, 'x', '2026-10-02T10:00:00+09:00')]);
+  t.setNow('2026-10-03T10:00:00+09:00');
+  await t.api('submitReviews', S, [rv(c1, 'o', '2026-10-03T10:00:00+09:00')]);
+  assert.deepEqual({ ...t.q('SELECT stage, due, lapses, reps FROM cards WHERE card_id = ?', c1)[0] }, { stage: 1, due: '2026-10-04', lapses: 1, reps: 3 });
+
+  // 真ん中の×を消すと、○○として作り直される（段階2・3日後）
+  const items = await t.api('listItems', A);
+  const it1 = items.find((i) => i.answer === '講義');
+  const hist = await t.api('itemHistory', A, it1.item_id);
+  const xId = hist.find((h) => h.result === '×').review_id;
+  await assert.rejects(t.api('deleteReviews', S, [xId]), /FORBIDDEN/);
+  assert.equal((await t.api('deleteReviews', A, [xId])).deleted, 1);
+  assert.deepEqual({ ...t.q('SELECT stage, due, lapses, reps, introduced_on FROM cards WHERE card_id = ?', c1)[0] },
+    { stage: 2, due: '2026-10-06', lapses: 0, reps: 2, introduced_on: '2026-10-01' });
+  assert.deepEqual(t.q('SELECT stage_before, stage_after FROM reviews WHERE card_id = ? ORDER BY answered_at', c1).map((r) => [r.stage_before, r.stage_after]), [[0, 1], [1, 2]]);
+
+  // 日ごと: 10/1 を取り消すと、その日の「終えた」記録も消え、c2 は未出題に戻る
+  const res = await t.api('resetDay', A, '2026-10-01');
+  assert.equal(res.deleted, 2);
+  assert.equal(t.q("SELECT COUNT(*) AS n FROM days WHERE study_day = '2026-10-01'")[0].n, 0);
+  assert.deepEqual({ ...t.q('SELECT state, stage, due, reps, introduced_on FROM cards WHERE card_id = ?', c2)[0] }, { state: 'new', stage: 0, due: '', reps: 0, introduced_on: '' });
+  // c1 は 10/3 の○だけが残る（10/3 に出し始めて段階1）
+  assert.deepEqual({ ...t.q('SELECT state, stage, due, introduced_on FROM cards WHERE card_id = ?', c1)[0] }, { state: 'learning', stage: 1, due: '2026-10-04', introduced_on: '2026-10-03' });
+
+  // 問題ごと: すべて消して未出題に戻す
+  await t.api('resetItem', A, it1.item_id);
+  assert.equal(t.q('SELECT state FROM cards WHERE card_id = ?', c1)[0].state, 'new');
+  assert.equal(t.q('SELECT COUNT(*) AS n FROM reviews')[0].n, 0);
+  assert.equal((await t.api('listItems', A)).every((i) => i.stats.state === 'new' && i.stats.reps === 0), true);
+  await assert.rejects(t.api('resetDay', A, 'yesterday'), /BAD_ARGS/);
+  await assert.rejects(t.api('resetItem', A, 'nope'), /NOT_FOUND/);
+});
+
+test('今日の記録を消すと、今日の問題としてもう一度出る', async () => {
+  const t = setup();
+  await t.api('addItems', A, [kanji('大学の講義を受ける', '講義', 'こうぎ')]);
+  const c = (await t.api('getToday', S)).cards[0];
+  await t.api('submitReviews', S, [rv(c.card_id, 'o', '2026-10-01T10:00:00+09:00')]);
+  await t.api('finishDay', S, { day: '2026-10-01', cards_done: 1 });
+  assert.equal((await t.api('getToday', S)).done, true);
+  await t.api('resetDay', A, '2026-10-01');
+  const again = await t.api('getToday', S);
+  assert.equal(again.done, false);
+  assert.deepEqual(again.cards.map((x) => x.card_id), [c.card_id]);
+  assert.equal(again.streak, 0);
+});

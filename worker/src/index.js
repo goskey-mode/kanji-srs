@@ -3,7 +3,7 @@
 // 無料プランの制約に合わせている: 1回の呼び出しで命令50個まで・CPU時間が短い → 集計はSQL、複数行の書き込みは json_each で1命令にまとめる
 import {
   DEFAULT_SETTINGS, RESULT_MARK, ITEM_FIELDS,
-  studyDay, addDays, schedule, cost, streak, normalizeItem, dupKey
+  studyDay, addDays, schedule, cost, streak, normalizeItem, dupKey, replay
 } from './logic.js';
 
 const PHOTO_MAX_BYTES = 1500000;
@@ -47,7 +47,10 @@ const API = {
   updateItem: ['admin', updateItem],
   setStatus: ['admin', setStatus],
   getOverview: ['admin', getOverview],
-  exportTable: ['admin', exportTable]
+  exportTable: ['admin', exportTable],
+  deleteReviews: ['admin', deleteReviews],
+  resetItem: ['admin', resetItem],
+  resetDay: ['admin', resetDay]
 };
 
 function json(obj, cors) {
@@ -184,29 +187,32 @@ async function getToday(c) {
   // 最後まで解いて終えた日だけ「終わり」にする。出す問題が0問で自動的に終えた日（cards_done = 0）は、
   // あとから親が問題を登録したら同じ日のうちに出題する
   let done = !!(todayRow && todayRow.completed && todayRow.cards_done > 0);
+  const finished = done;
   const queue = [];
   const writes = [];
+  const allowance = Math.max(0, st.new_per_day - introRes.results[0].n);
+  const dueStmt = c.db.prepare(
+    `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
+     WHERE i.status = 'active' AND c.state IN ('learning', 'spot') AND c.due <> '' AND c.due <= ?
+     ORDER BY CASE WHEN c.state = 'spot' THEN 99 ELSE c.stage END, c.due, i.created_at, i.item_id,
+       CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT 500`).bind(today);
+  const freshStmt = c.db.prepare(
+    `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
+     WHERE i.status = 'active' AND c.state = 'new'
+     ORDER BY CASE WHEN i.origin IN ('塾', '模試') THEN 0 ELSE 1 END, i.created_at, i.item_id,
+       CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT ?`).bind(allowance);
   if (!done) {
     let spent = 0;
     for (const r of spentRes.results) spent += cost(r.direction, !!r.photo_q, st);
     let budget = st.daily_seconds - spent;
-    const due = await c.db.prepare(
-      `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
-       WHERE i.status = 'active' AND c.state IN ('learning', 'spot') AND c.due <> '' AND c.due <= ?
-       ORDER BY CASE WHEN c.state = 'spot' THEN 99 ELSE c.stage END, c.due, i.created_at, i.item_id,
-         CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT 500`).bind(today).all();
+    const due = await dueStmt.all();
     for (const r of due.results) {
       const k = cost(r.direction, !!r.photo_q, st);
       // その日まだ1問も解いていなければ、予算を超える1問目でも出す
       if (k <= budget || (spent === 0 && queue.length === 0)) { queue.push(r); budget -= k; }
     }
-    const allowance = st.new_per_day - introRes.results[0].n;
     if (allowance > 0) {
-      const fresh = await c.db.prepare(
-        `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
-         WHERE i.status = 'active' AND c.state = 'new'
-         ORDER BY CASE WHEN i.origin IN ('塾', '模試') THEN 0 ELSE 1 END, i.created_at, i.item_id,
-           CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT ?`).bind(allowance).all();
+      const fresh = await freshStmt.all();
       const introduced = [];
       for (const r of fresh.results) {
         const k = cost(r.direction, !!r.photo_q, st);
@@ -231,16 +237,31 @@ async function getToday(c) {
       done = true;
     }
   }
+  // 最後まで終えた日も、同じ日に何度でも取り組めるようにする
+  //   extra: まだ出していない問題（予算を超えた復習と、今日の新しいカードの残り枠）。解けば記録する
+  //   practice: 今日解いた問題。記録しない練習用（同じ日に何度も記録すると復習の間隔が進みすぎるため）
+  let extra = [], practice = [];
+  if (finished) {
+    const [dueAll, freshAll, practiced] = await c.db.batch([dueStmt, freshStmt,
+      c.db.prepare(`SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM reviews r
+        JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id
+        WHERE r.study_day = ? AND i.status = 'active' GROUP BY c.card_id ORDER BY MIN(r.answered_at)`).bind(today)]);
+    extra = dueAll.results.concat(freshAll.results);
+    practice = practiced.results;
+  }
   const s = streak(dayRows, today, st);
   if (s.newFreezes.length) writes.push(upsertDaysStmt(c, s.newFreezes.map((d) => ({ study_day: d, freeze_used: 1 })), ['freeze_used']));
   if (writes.length) await c.db.batch(writes);
+  const view = async (list) => { const out = []; for (const r of list) out.push(await withPhotoUrls(c, r)); return out; };
   let est = 0;
-  const cards = [];
-  for (const r of queue) {
-    est += cost(r.direction, !!r.photo_q, st);
-    cards.push(await withPhotoUrls(c, r));
-  }
-  return { today, done, cards, estSeconds: est, streak: s.streak, freezesLeft: s.freezesLeft, graduated: gradRes.results[0].n };
+  for (const r of queue) est += cost(r.direction, !!r.photo_q, st);
+  let extraEst = 0;
+  for (const r of extra) extraEst += cost(r.direction, !!r.photo_q, st);
+  return {
+    today, done, cards: await view(queue), estSeconds: est,
+    extra: await view(extra), extraEstSeconds: extraEst, practice: await view(practice),
+    streak: s.streak, freezesLeft: s.freezesLeft, graduated: gradRes.results[0].n
+  };
 }
 
 // list: [{review_id, card_id, result: 'o'|'t'|'x', answered_at, duration_sec}]
@@ -252,7 +273,7 @@ async function submitReviews(c, role, list) {
   const cardIds = [...new Set(list.map((r) => String((r && r.card_id) || '')))];
   const [seenRes, cardsRes] = await c.db.batch([
     c.db.prepare('SELECT review_id FROM reviews WHERE review_id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(ids)),
-    c.db.prepare('SELECT card_id, state, stage, reps, lapses FROM cards WHERE card_id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(cardIds))
+    c.db.prepare('SELECT card_id, state, stage, reps, lapses, introduced_on FROM cards WHERE card_id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(cardIds))
   ]);
   const seen = new Set(seenRes.results.map((r) => r.review_id));
   const cardMap = Object.fromEntries(cardsRes.results.map((r) => [r.card_id, r]));
@@ -265,10 +286,12 @@ async function submitReviews(c, role, list) {
     if (!/^[\w-]{8,64}$/.test(rid) || !RESULT_MARK[r.result]) { skipped++; continue; }
     if (seen.has(rid)) { duplicates++; continue; }
     const card = cardMap[r.card_id];
-    if (!card || card.state === 'new' || card.state === 'retired') { skipped++; continue; }
+    if (!card || card.state === 'retired') { skipped++; continue; }
     let ms = Date.parse(r.answered_at);
     if (!isFinite(ms) || ms > c.now + 5 * 60000 || ms < c.now - 14 * 86400000) ms = c.now;
     const day = studyDay(ms, st.day_start_hour);
+    // まだ出していなかった新しいカード（終わったあとの「つづき」で解いた）は、ここで出し始めたことにする
+    if (card.state === 'new') Object.assign(card, { state: 'learning', stage: 0, introduced_on: day });
     const before = card.stage;
     const n = schedule(card.state, card.stage, r.result, day);
     Object.assign(card, {
@@ -284,7 +307,7 @@ async function submitReviews(c, role, list) {
     seen.add(rid);
   }
   if (added.length) {
-    const upd = ['state', 'stage', 'due', 'reps', 'lapses', 'last_result', 'last_reviewed_at'];
+    const upd = ['state', 'stage', 'due', 'reps', 'lapses', 'last_result', 'last_reviewed_at', 'introduced_on'];
     await c.db.batch([
       c.db.prepare(`UPDATE cards SET ${upd.map((k) => `${k} = j.${k}`).join(', ')}
         FROM (SELECT ${['card_id', ...upd].map((k) => `json_extract(value, '$.${k}') AS ${k}`).join(', ')} FROM json_each(?)) AS j
@@ -307,7 +330,10 @@ async function finishDay(c, role, info) {
     cards_done: Math.max(0, Math.round(Number(info.cards_done) || 0)),
     seconds: Math.max(0, Math.round(Number(info.seconds) || 0))
   };
-  await upsertDaysStmt(c, [row], ['completed', 'cards_done', 'seconds']).run();
+  // 同じ日に「つづき」で何度終えても、解いた数と時間は足していく
+  await c.db.prepare(`INSERT INTO days (study_day, completed, cards_done, seconds) VALUES (?, 1, ?, ?)
+    ON CONFLICT(study_day) DO UPDATE SET completed = 1, cards_done = days.cards_done + excluded.cards_done, seconds = days.seconds + excluded.seconds`)
+    .bind(row.study_day, row.cards_done, row.seconds).run();
   const { results } = await c.db.prepare('SELECT study_day, completed, freeze_used FROM days').all();
   const s = streak(results, today, st);
   if (s.newFreezes.length) await upsertDaysStmt(c, s.newFreezes.map((d) => ({ study_day: d, freeze_used: 1 })), ['freeze_used']).run();
@@ -400,7 +426,7 @@ async function listItems(c) {
 
 async function itemHistory(c, role, itemId) {
   const { results } = await c.db.prepare(
-    `SELECT r.answered_at, r.study_day, r.result, c.direction, r.duration_sec, r.stage_before, r.stage_after
+    `SELECT r.review_id, r.answered_at, r.study_day, r.result, c.direction, r.duration_sec, r.stage_before, r.stage_after
      FROM reviews r JOIN cards c ON c.card_id = r.card_id WHERE c.item_id = ? ORDER BY r.answered_at DESC LIMIT 30`).bind(String(itemId)).all();
   return results;
 }
@@ -471,4 +497,72 @@ async function exportTable(c, role, name, offset) {
   const off = Math.max(0, Math.floor(Number(offset) || 0));
   const { results } = await c.db.prepare(EXPORTS[name] + ' LIMIT 5000 OFFSET ?').bind(off).all();
   return { rows: results, next: results.length === 5000 ? off + 5000 : null };
+}
+
+// ───────── 解いた記録の削除（親だけ） ─────────
+// 記録を消したら、残っている記録を古い順にたどり直してカードの状態（段階・次の出題日など）を作り直す
+
+async function rebuildCards(c, cardIds) {
+  if (!cardIds.length) return 0;
+  const { results } = await c.db.prepare(
+    'SELECT review_id, card_id, result, study_day, answered_at FROM reviews WHERE card_id IN (SELECT value FROM json_each(?)) ORDER BY answered_at, review_id')
+    .bind(JSON.stringify(cardIds)).all();
+  const byCard = {};
+  for (const id of cardIds) byCard[id] = [];
+  for (const r of results) byCard[r.card_id].push(r);
+  const cards = [], stageRows = [];
+  for (const id of cardIds) {
+    const { card, stages } = replay(byCard[id]);
+    cards.push({ card_id: id, ...card });
+    for (const [rid, [before, after]] of Object.entries(stages)) stageRows.push({ review_id: rid, stage_before: before, stage_after: after });
+  }
+  const upd = ['state', 'stage', 'due', 'reps', 'lapses', 'last_result', 'last_reviewed_at', 'introduced_on'];
+  const stmts = [c.db.prepare(`UPDATE cards SET ${upd.map((k) => `${k} = j.${k}`).join(', ')}
+    FROM (SELECT ${['card_id', ...upd].map((k) => `json_extract(value, '$.${k}') AS ${k}`).join(', ')} FROM json_each(?)) AS j
+    WHERE cards.card_id = j.card_id`).bind(JSON.stringify(cards))];
+  if (stageRows.length) {
+    stmts.push(c.db.prepare(`UPDATE reviews SET stage_before = j.stage_before, stage_after = j.stage_after
+      FROM (SELECT json_extract(value, '$.review_id') AS review_id, json_extract(value, '$.stage_before') AS stage_before,
+        json_extract(value, '$.stage_after') AS stage_after FROM json_each(?)) AS j
+      WHERE reviews.review_id = j.review_id`).bind(JSON.stringify(stageRows)));
+  }
+  await c.db.batch(stmts);
+  return cards.length;
+}
+
+// 解答の記録を1件ずつ消す（問題の詳細の履歴から）
+async function deleteReviews(c, role, reviewIds) {
+  if (!Array.isArray(reviewIds) || !reviewIds.length || reviewIds.length > 500) throw new Error('BAD_ARGS');
+  const ids = JSON.stringify(reviewIds.map(String));
+  const { results } = await c.db.prepare('SELECT DISTINCT card_id FROM reviews WHERE review_id IN (SELECT value FROM json_each(?))').bind(ids).all();
+  const r = await c.db.prepare('DELETE FROM reviews WHERE review_id IN (SELECT value FROM json_each(?))').bind(ids).run();
+  await rebuildCards(c, results.map((x) => x.card_id));
+  return { deleted: r.meta.changes };
+}
+
+// 1つの問題の記録をすべて消して、未出題に戻す
+async function resetItem(c, role, itemId) {
+  const { results } = await c.db.prepare('SELECT card_id FROM cards WHERE item_id = ?').bind(String(itemId)).all();
+  if (!results.length) throw new Error('NOT_FOUND');
+  const ids = results.map((x) => x.card_id);
+  const r = await c.db.prepare('DELETE FROM reviews WHERE card_id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(ids)).run();
+  await rebuildCards(c, ids);
+  return { deleted: r.meta.changes };
+}
+
+// ある日の記録をすべて消す（テストで解いた日を取り消す）。その日の「終えた」記録と、その日に出し始めたカードも元に戻す
+async function resetDay(c, role, day) {
+  day = String(day || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('BAD_ARGS');
+  const [revCards, introCards] = await c.db.batch([
+    c.db.prepare('SELECT DISTINCT card_id FROM reviews WHERE study_day = ?').bind(day),
+    c.db.prepare('SELECT card_id FROM cards WHERE introduced_on = ?').bind(day)
+  ]);
+  const ids = [...new Set(revCards.results.concat(introCards.results).map((x) => x.card_id))];
+  const [delRev] = await c.db.batch([
+    c.db.prepare('DELETE FROM reviews WHERE study_day = ?').bind(day),
+    c.db.prepare('DELETE FROM days WHERE study_day = ?').bind(day)
+  ]);
+  await rebuildCards(c, ids);
+  return { deleted: delRev.meta.changes, cards: ids.length };
 }
