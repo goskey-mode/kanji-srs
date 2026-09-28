@@ -3,7 +3,7 @@
   "name": "かんじれんしゅう",
   "short_name": "かんじ",
   "start_url": "study.html",
-  "scope": "./",
+  "scope": "study.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#1a1a19",

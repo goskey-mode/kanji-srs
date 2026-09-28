@@ -3,7 +3,7 @@
   "name": "漢字SRS 管理",
   "short_name": "漢字管理",
   "start_url": "admin.html",
-  "scope": "./",
+  "scope": "admin.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#1a1a19",
