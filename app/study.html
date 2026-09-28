@@ -6,6 +6,9 @@
 <title>かんじれんしゅう</title>
 <link rel="stylesheet" href="common.css">
 <style>
+  :root { --qfont: inherit; }
+  .fonts { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+  .fonts .seg button { min-width: 72px; min-height: 40px; font-size: 15px; }
   /* タブレットの表示領域 570×584 に、スクロールなしで1問が収まること */
   #app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
   .bar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--line); font-size: 14px; flex: none; }
@@ -20,14 +23,15 @@
   .streak small { display: block; font-size: 15px; font-weight: 400; color: var(--muted); margin-top: 6px; }
   .today { font-size: 18px; }
   .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-  .sentence { font-size: clamp(24px, 6vw, 36px); line-height: 1.7; font-weight: 500; word-break: break-all; }
+  .sentence { font-family: var(--qfont); font-size: clamp(24px, 6vw, 36px); line-height: 1.7; font-weight: 500; word-break: break-all; }
   .sentence.long { font-size: clamp(20px, 4.6vw, 28px); }
   .sentence mark { background: var(--hl); color: var(--hl-text); padding: 0 6px; border-radius: 6px; font-weight: 700; }
   .hint { color: var(--muted); font-size: 15px; }
-  .answer { font-size: clamp(40px, 11vw, 64px); font-weight: 700; line-height: 1.15; word-break: break-all; }
+  .answer { font-family: var(--qfont); font-size: clamp(40px, 11vw, 64px); font-weight: 700; line-height: 1.15; word-break: break-all; }
   .answer.long { font-size: clamp(22px, 5vw, 30px); font-weight: 600; }
-  .reading { font-size: 20px; color: var(--muted); }
-  .explain { font-size: 16px; max-width: 520px; text-align: left; background: var(--panel); border: 1px solid var(--line);
+  .reading { font-family: var(--qfont); font-size: 20px; color: var(--muted); }
+  .qtext { font-family: var(--qfont); }
+  .explain { font-family: var(--qfont); font-size: 16px; max-width: 520px; text-align: left; background: var(--panel); border: 1px solid var(--line);
     border-radius: 10px; padding: 8px 12px; white-space: pre-wrap; }
   .photo { max-width: 100%; max-height: 42vh; max-height: 42dvh; object-fit: contain; border: 1px solid var(--line); border-radius: 8px; cursor: zoom-in; }
   .photo-wait { width: 100%; max-width: 480px; height: 34vh; display: flex; align-items: center; justify-content: center;
@@ -66,6 +70,22 @@
   var BLANK = '（　　）'; // 穴埋め問題の空欄
   var KEY_DIR = 'kanjisrs_challenge_dir';
   var DIRS = [['write', '書き'], ['read', '読み'], ['mix', 'まぜる']];
+
+  // 字の形（書体）。明朝・教科書体風は Google Fonts から、選ばれたときだけ読み込む
+  var KEY_FONT = 'kanjisrs_font';
+  var FONTS = {
+    gothic: { label: 'ゴシック', family: 'inherit' },
+    mincho: { label: '明朝', family: "'Noto Serif JP', serif", css: 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&display=swap' },
+    kyokasho: { label: '教科書体', family: "'Klee One', serif", css: 'https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap' }
+  };
+  function applyFont(key) {
+    var f = FONTS[key] || FONTS.gothic;
+    if (f.css && !document.querySelector('link[data-font="' + key + '"]')) {
+      document.head.appendChild(h('link', { rel: 'stylesheet', href: f.css, 'data-font': key }));
+    }
+    document.documentElement.style.setProperty('--qfont', f.family);
+  }
+  applyFont(KS.load(KEY_FONT) || 'gothic');
 
   var state = {
     pin: KS.load(KEY_PIN) || '',
@@ -217,6 +237,11 @@
     }
     // 新しい問題は、時間があるときにいつでも（10分の枠や連続日数とは別）
     main.push(h('button', { class: 'btn ghost', text: '新しい問題にチャレンジ', onclick: showDecks }));
+    // 字の形の切り替え（この端末に保存）
+    var cur = KS.load(KEY_FONT) || 'gothic';
+    main.push(h('div', { class: 'fonts' }, ['字の形', h('div', { class: 'seg' }, Object.keys(FONTS).map(function (k) {
+      return h('button', { class: (k === cur ? 'on ' : '') + 'qtext', text: FONTS[k].label, onclick: function () { KS.store(KEY_FONT, k); applyFont(k); showHome(); } });
+    }))]));
     var fresh = t.cards.filter(function (c) { return c.stage === 0 && c.state === 'learning'; }).length;
     main.push(h('div', { class: 'chips' }, [
       h('span', { class: 'chip', text: '卒業した問題 ' + t.graduated }),
@@ -350,7 +375,7 @@
     var main = [];
     if (KS.isKanji(c)) {
       var p = KS.promptParts(c);
-      main.push(h('div', { class: 'hint' }, [p.before, h('b', { text: c.answer }), p.after]));
+      main.push(h('div', { class: 'hint qtext' }, [p.before, h('b', { text: c.answer }), p.after]));
       if (c.direction === 'write') {
         main.push(h('div', { class: 'answer', text: c.answer }));
         main.push(h('div', { class: 'reading', text: c.reading }));
@@ -364,7 +389,7 @@
       // 穴埋めは、答えを入れた文も見せて使い方ごと覚える
       if (c.answer && c.sentence && c.sentence.indexOf(BLANK) >= 0) {
         var at = c.sentence.indexOf(BLANK);
-        main.push(h('div', { class: 'hint' }, [c.sentence.slice(0, at), h('b', { text: c.answer }), c.sentence.slice(at + BLANK.length)]));
+        main.push(h('div', { class: 'hint qtext' }, [c.sentence.slice(0, at), h('b', { text: c.answer }), c.sentence.slice(at + BLANK.length)]));
       }
     }
     // 漢字の問題の解説は、その単語の意味として表示する
