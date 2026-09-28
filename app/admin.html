@@ -191,7 +191,9 @@
     ];
   }
   function metaValues() {
-    return { source: meta.source || '', source_date: meta.source_date || '', origin: meta.origin || '塾', reason: meta.reason || '', pool: meta.pool || 'mistake' };
+    var pool = meta.pool || 'mistake';
+    // 新しい問題はまだ間違えていないので、間違えた理由は記録しない
+    return { source: meta.source || '', source_date: meta.source_date || '', origin: meta.origin || '塾', reason: pool === 'new' ? '' : (meta.reason || ''), pool: pool };
   }
 
   // 漢字まとめ: 1行1問「例文,答え,読み[,出題表記]」。カンマまたはタブ区切り（Excel からの貼り付け可）
@@ -371,7 +373,36 @@
     ]));
   }
 
+  // 一問一答のまとめ登録: 1行1問「問題,答え,解説」。タブを含む行はタブで区切る（Excel などからの貼り付け）。
+  // 3列目以降は解説（問題文の中の読点は「、」を使う）
+  function parseQA(text, type) {
+    var existing = {};
+    (items || []).forEach(function (i) { existing[[i.type, i.sentence, i.answer, i.photo_q].join('|')] = true; });
+    var seen = {};
+    return text.split(/\r?\n/).filter(function (line) { return line.trim(); }).map(function (line) {
+      var cols = (line.indexOf('\t') >= 0 ? line.split('\t') : line.split(',')).map(function (v) { return v.trim(); });
+      var r = { line: line, sentence: cols[0] || '', answer: cols[1] || '', explanation: cols.slice(2).filter(Boolean).join('、'), error: '' };
+      var key = [type, r.sentence, r.answer, ''].join('|');
+      if (!r.sentence || !r.answer) r.error = '「問題,答え」の2列以上にしてください';
+      else if (seen[key]) r.error = '同じ行があります';
+      else if (existing[key]) r.error = '登録済みです';
+      seen[key] = true;
+      return r;
+    });
+  }
+
   function manualForm() {
+    var mode = meta.manualMode || 'one';
+    var modeSeg = h('div', { class: 'sub', style: 'border:1px solid var(--line);border-radius:10px' }, [['one', '1問ずつ'], ['bulk', 'まとめて（1行1問）']].map(function (x) {
+      return h('button', { class: x[0] === mode ? 'on' : '', text: x[1], onclick: function () { meta.manualMode = x[0]; saveMeta(); render(); } });
+    }));
+    var head = [
+      modeSeg,
+      h('div', { class: 'row2' }, [field('科目', sel('msubject', SUBJECTS, '社会')), field('型', sel('mtype', TYPES, 'A'))]),
+      field('単元（新しい問題のときはチャレンジの種類の名前になる）', txt('unit', '例: 地理'))
+    ].concat(commonMeta());
+    if (mode === 'bulk') return h('div', { class: 'form' }, head.concat(bulkQA()));
+
     var qIn = h('textarea', { class: 'input', placeholder: '例: 日本で一番長い川は？', style: 'min-height:72px;font-family:inherit' });
     var aIn = h('input', { class: 'input', placeholder: '例: 信濃川' });
     var eIn = h('textarea', { class: 'input', placeholder: '（任意）', style: 'min-height:60px;font-family:inherit' });
@@ -388,12 +419,59 @@
         KS.toast('登録しました');
       }).catch(fail).then(function () { btn.disabled = false; });
     } });
-    return h('div', { class: 'form' }, [
-      h('div', { class: 'row2' }, [field('科目', sel('msubject', SUBJECTS, '社会')), field('型', sel('mtype', TYPES, 'A'))]),
-      field('単元', txt('unit', '例: 地理'))
-    ].concat(commonMeta(), [
+    return h('div', { class: 'form' }, head.concat([
       field('問題文', qIn), field('答え', aIn), field('解説（任意）', eIn), btn
     ]));
+  }
+
+  function bulkQA() {
+    var ta = h('textarea', { class: 'input', value: meta.qaDraft || '',
+      placeholder: '日本で一番長い川は？,信濃川,長さ367km。2位は利根川\n太陽のまわりを回る星を何という？,惑星',
+      oninput: function () { meta.qaDraft = ta.value; saveMeta(); preview(); } });
+    var table = h('table', { class: 'pv' });
+    var btn = h('button', { class: 'btn', text: '登録', onclick: submit });
+    function type() { return meta.mtype || 'A'; }
+    function preview() {
+      var rows = parseQA(ta.value, type());
+      var ok = rows.filter(function (r) { return !r.error; });
+      table.replaceChildren.apply(table, [h('tr', {}, [h('th', { text: '問題' }), h('th', { text: '答え' }), h('th', { text: '' })])].concat(
+        rows.map(function (r) {
+          if (r.error) return h('tr', {}, [h('td', { class: 'mid', text: r.error + '：' + r.line }), h('td', { text: r.answer }), h('td', { class: 'mid', text: '!' })]);
+          return h('tr', {}, [h('td', {}, [r.sentence, r.explanation ? h('div', { class: 'muted', style: 'font-size:12px', text: '解説：' + r.explanation }) : null]),
+            h('td', { text: r.answer }), h('td', { class: 'ok', text: '✓' })]);
+        })));
+      btn.textContent = ok.length ? ok.length + '件を登録' : '登録';
+      btn.disabled = !ok.length;
+    }
+    function submit() {
+      var rows = parseQA(ta.value, type());
+      var ok = rows.filter(function (r) { return !r.error; });
+      if (!ok.length) return;
+      var m = metaValues();
+      btn.disabled = true;
+      call('addItems', ok.map(function (r) {
+        return { type: type(), subject: meta.msubject || '社会', unit: meta.unit || '', sentence: r.sentence, answer: r.answer,
+          explanation: r.explanation, source: m.source, source_date: m.source_date, reason: m.reason, origin: m.origin, pool: m.pool };
+      })).then(function (res) {
+        // 登録できなかった行と、もともとエラーだった行だけ入力欄に残す
+        var failed = {};
+        res.skipped.forEach(function (s) { failed[s.index] = s.reason; });
+        ta.value = rows.filter(function (r) { return r.error; }).map(function (r) { return r.line; })
+          .concat(ok.filter(function (r, i) { return failed[i] !== undefined; }).map(function (r) { return r.line; })).join('\n');
+        meta.qaDraft = ta.value;
+        saveMeta();
+        items = null;
+        KS.toast(res.added + '件登録しました' + (res.skipped.length ? '（' + res.skipped.length + '件は登録できず）' : ''));
+        call('listItems').then(function (r) { items = r; preview(); }).catch(function () {});
+      }).catch(fail).then(function () { btn.disabled = false; preview(); });
+    }
+    if (!items) call('listItems').then(function (r) { items = r; preview(); }).catch(function () {});
+    setTimeout(preview);
+    return [
+      field('1行1問「問題,答え,解説」。解説は省略してもよい（カンマかタブ区切り。Excel やスプレッドシートからの貼り付けも可。文の中の区切りは「、」）', ta),
+      table,
+      btn
+    ];
   }
 
   // ───── 一覧 ─────
