@@ -1,6 +1,6 @@
 // ローカル確認用: worker/src を node:sqlite 上の D1 シムで動かし、app/ を配る
 //   node test/dev-server.mjs [--seed] [--new=10]
-//   画面: http://127.0.0.1:8765/study.html#api=http%3A%2F%2F127.0.0.1%3A8787%2Fapi
+//   画面: http://127.0.0.1:8765/study/#api=http%3A%2F%2F127.0.0.1%3A8787%2Fapi
 //   PIN: 学習 111111 / 親 222222
 import http from 'node:http';
 import fs from 'node:fs';
@@ -70,7 +70,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
   '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
 http.createServer((req, res) => {
   const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const file = path.join(APP, p === '/' ? 'index.html' : p);
+  const file = path.join(APP, p.endsWith('/') ? p + 'index.html' : p);
   if (!file.startsWith(APP) || !fs.existsSync(file)) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
   res.end(fs.readFileSync(file));

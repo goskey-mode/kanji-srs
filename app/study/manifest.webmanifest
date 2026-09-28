@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "かんじれんしゅう",
+  "short_name": "かんじ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1a1a19",
+  "theme_color": "#2f6fdb",
+  "icons": [
+    { "src": "../icons/study-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/study-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/study-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

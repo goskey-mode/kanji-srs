@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漢字SRS 管理</title>
+<link rel="stylesheet" href="../common.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3a3a38">
+<link rel="icon" href="../icons/admin-192.png">
+<link rel="apple-touch-icon" href="../icons/admin-192.png">
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js').catch(function () {});</script>
+<style>
+  body { padding-bottom: 72px; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  header.top { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px; }
+  header.top b { flex: 1; font-size: 17px; }
+  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--panel); border-top: 1px solid var(--line);
+    display: flex; }
+  nav.tabs button { flex: 1; min-height: 56px; border: 0; background: none; color: var(--muted); font-size: 14px; }
+  nav.tabs button.on { color: var(--accent); font-weight: 700; box-shadow: inset 0 3px 0 var(--accent); }
+  .sub { display: flex; border-bottom: 1px solid var(--line); }
+  .sub button { flex: 1; min-height: 44px; border: 0; background: none; color: var(--muted); font-size: 14px; }
+  .sub button.on { color: var(--accent); font-weight: 700; box-shadow: inset 0 -3px 0 var(--accent); }
+  .form { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .chk { display: flex; gap: 8px; align-items: center; font-size: 15px; }
+  table.pv { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.pv th, table.pv td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: left; vertical-align: top; }
+  table.pv th { color: var(--muted); font-weight: 400; font-size: 12px; }
+  table.pv mark { background: var(--hl); color: var(--hl-text); border-radius: 4px; padding: 0 3px; }
+  .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .slot { border: 1px dashed var(--line); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+  .slot .t { font-size: 13px; color: var(--muted); }
+  .slot img { width: 100%; max-height: 160px; object-fit: contain; border-radius: 6px; background: var(--panel); }
+  .slot .btns { display: flex; gap: 6px; }
+  .slot .btns label { flex: 1; text-align: center; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 6px; font-size: 14px; }
+  .slot input[type=file] { display: none; }
+  .jobs { font-size: 13px; }
+  .filters { display: flex; gap: 6px; padding: 10px 16px; flex-wrap: wrap; }
+  .filters select, .filters input { min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 4px 8px; font-size: 14px; }
+  .filters input { flex: 1; min-width: 120px; }
+  .list { padding: 0 16px; }
+  .item { border-bottom: 1px solid var(--line); padding: 10px 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; cursor: pointer; }
+  .item .q { font-size: 15px; word-break: break-all; }
+  .item .q mark { background: var(--hl); color: var(--hl-text); border-radius: 4px; padding: 0 3px; }
+  .item .meta { font-size: 12px; color: var(--muted); }
+  .dots { font-size: 13px; letter-spacing: 2px; text-align: right; white-space: nowrap; }
+  .stage { display: flex; gap: 2px; justify-content: flex-end; align-items: center; }
+  .stage i { width: 10px; height: 8px; border-radius: 2px; background: var(--line); }
+  .stage i.f { background: var(--accent); }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .kpi b { display: block; font-size: 26px; line-height: 1.3; }
+  .kpi span { font-size: 12px; color: var(--muted); }
+  .sec { padding: 14px 16px 4px; font-size: 13px; color: var(--muted); }
+  .week { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding: 0 16px; }
+  .week div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; font-size: 11px; color: var(--muted); height: 100%; }
+  .week i { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .week b { font-size: 12px; color: var(--text); font-weight: 400; }
+  dialog { width: min(640px, calc(100vw - 16px)); max-height: calc(100vh - 32px); border: 1px solid var(--line); border-radius: 12px;
+    background: var(--bg); color: var(--text); padding: 0; }
+  dialog::backdrop { background: rgba(0, 0, 0, .5); }
+  dialog .form { padding: 14px 16px; }
+  .hist { font-size: 13px; width: 100%; border-collapse: collapse; }
+  .hist td { border-bottom: 1px solid var(--line); padding: 4px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .actions .btn { flex: 1; }
+  .photos { display: flex; gap: 8px; }
+  .photos img { max-width: 50%; max-height: 180px; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; }
+  .empty { padding: 24px 16px; color: var(--muted); text-align: center; }
+  @media (max-width: 380px) { .row3 { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" role="status"></div>
+<script src="../api.js"></script>
+<script>
+(function () {
+  'use strict';
+  var h = KS.h;
+  var app = document.getElementById('app');
+  var KEY_PIN = 'kanjisrs_admin_pin';
+  var KEY_META = 'kanjisrs_admin_meta';
+
+  var SUBJECTS = ['国語', '算数', '理科', '社会', '適性'];
+  var REASONS = ['知らなかった', 'うっかり', '時間切れ', '読み違い'];
+  var ORIGINS = ['塾', '模試', 'その他'];
+  var TYPES = [['A', 'A 暗記（一問一答）'], ['B', 'B 手順（計算・算数）'], ['C', 'C 考え方（読解・記述）']];
+  var STATES = { new: '未出題', learning: '学習中', graduated: '卒業', known: '覚えていた', suspended: '停止中' };
+  // 登録先: まちがえた問題（毎日の復習）/ 新しい問題（チャレンジで解き、△×ならまちがえた問題に移る）
+  var POOLS = [['mistake', 'まちがえた問題'], ['new', '新しい問題（チャレンジ用）']];
+
+  var pin = KS.load(KEY_PIN) || '';
+  var meta = KS.loadJson(KEY_META, {});
+  var tab = 'add', sub = 'kanji';
+  var items = null;       // listItems のキャッシュ（いま選んでいる登録先・単元の分）
+  var units = null;       // listUnits のキャッシュ（一覧の絞り込み用）
+  var keys = null;        // listKeys のキャッシュ（登録前の重複チェック用）
+  var jobs = [];          // 写真登録の裏の処理 {label, status}
+  var filters = { pool: 'mistake', unit: '', subject: '', state: '', reason: '', q: '' };
+
+  function saveMeta() { KS.storeJson(KEY_META, meta); }
+  function call(fn) { return KS.call(fn, pin, Array.prototype.slice.call(arguments, 1)); }
+  function fail(e) {
+    if (/BAD_PIN|FORBIDDEN/.test(String(e && e.message))) { KS.remove(KEY_PIN); pin = ''; showSetup(KS.message(e)); return; }
+    KS.toast(KS.message(e), 'error');
+  }
+  function today() {
+    var d = new Date(Date.now() + 9 * 3600000);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // ───── 入力部品（前回の値を引き継ぐ） ─────
+  function sel(key, options, def) {
+    var s = h('select', { class: 'input', onchange: function () { meta[key] = s.value; saveMeta(); } },
+      options.map(function (o) {
+        var v = Array.isArray(o) ? o[0] : o, label = Array.isArray(o) ? o[1] : o;
+        return h('option', { value: v, text: label });
+      }));
+    s.value = meta[key] || def || (Array.isArray(options[0]) ? options[0][0] : options[0]);
+    meta[key] = s.value;
+    return s;
+  }
+  function txt(key, placeholder, type) {
+    var i = h('input', { class: 'input', type: type || 'text', placeholder: placeholder || '', value: meta[key] || '',
+      oninput: function () { meta[key] = i.value; saveMeta(); } });
+    return i;
+  }
+  function field(label, el) { return h('label', { class: 'field' }, [label, el]); }
+
+  // ───── 初期設定 ─────
+  function showSetup(msg) {
+    var needApi = !KS.validApi(KS.getApi());
+    var apiIn = h('input', { class: 'input', type: 'url', placeholder: 'https://kanji-srs.…workers.dev/api', value: KS.getApi() });
+    var pinIn = h('input', { class: 'input', type: 'password', inputmode: 'numeric', autocomplete: 'off', placeholder: '親用PIN' });
+    var btn = h('button', { class: 'btn', text: 'ログイン', onclick: function () {
+      if (needApi && !KS.setApi(apiIn.value.trim())) { KS.toast('接続先URLの形式が違います', 'error'); return; }
+      var p = pinIn.value.trim();
+      btn.disabled = true;
+      KS.call('whoami', p).then(function (r) {
+        if (r.role !== 'admin') throw new Error('FORBIDDEN');
+        pin = p;
+        KS.store(KEY_PIN, p);
+        render();
+      }).catch(function (e) { btn.disabled = false; KS.toast(KS.message(e), 'error'); });
+    } });
+    app.replaceChildren(h('div', { class: 'setup' }, [
+      h('h1', { text: '漢字SRS 管理' }),
+      msg ? h('div', { class: 'ng', text: msg }) : null,
+      needApi ? field('接続先（APIのURL）', apiIn) : null,
+      field('親用PIN', pinIn),
+      btn
+    ]));
+  }
+
+  // ───── 全体 ─────
+  function render() {
+    if (!KS.validApi(KS.getApi()) || !pin) { showSetup(); return; }
+    var titles = { add: '登録', list: '問題一覧', status: '状況' };
+    var jobsActive = jobs.filter(function (j) { return j.status === 'saving'; }).length;
+    var head = h('header', { class: 'top' }, [h('b', { text: titles[tab] }),
+      jobsActive ? h('span', { class: 'chip', text: '保存中 ' + jobsActive + '件' }) : null]);
+    var body = h('div', { class: 'wrap' });
+    var nav = h('nav', { class: 'tabs' }, [['add', '登録'], ['list', '一覧'], ['status', '状況']].map(function (t) {
+      return h('button', { class: tab === t[0] ? 'on' : '', text: t[1], onclick: function () {
+        tab = t[0];
+        // 子どもが別の端末で解いた結果を反映するため、一覧は開くたびに読み直す
+        if (tab === 'list') { items = null; units = null; }
+        render();
+      } });
+    }));
+    app.replaceChildren(head, body, nav);
+    if (tab === 'add') renderAdd(body);
+    if (tab === 'list') renderList(body);
+    if (tab === 'status') renderStatus(body);
+  }
+
+  // ───── 登録 ─────
+  function renderAdd(body) {
+    var subs = h('div', { class: 'sub' }, [['kanji', '漢字まとめ'], ['photo', '写真'], ['manual', '手入力']].map(function (s) {
+      return h('button', { class: sub === s[0] ? 'on' : '', text: s[1], onclick: function () { sub = s[0]; render(); } });
+    }));
+    body.appendChild(subs);
+    if (sub === 'kanji') body.appendChild(kanjiForm());
+    if (sub === 'photo') body.appendChild(photoForm());
+    if (sub === 'manual') body.appendChild(manualForm());
+  }
+
+  function commonMeta() {
+    return [
+      field('登録先', sel('pool', POOLS, 'mistake')),
+      h('div', { class: 'row2' }, [field('出典', txt('source', '例: 漢字テスト 第5回')), field('日付', txt('source_date', '', 'date'))]),
+      h('div', { class: 'row2' }, [field('種類', sel('origin', ORIGINS)), field('間違えた理由', sel('reason', REASONS))])
+    ];
+  }
+  function metaValues() {
+    var pool = meta.pool || 'mistake';
+    // 新しい問題はまだ間違えていないので、間違えた理由は記録しない
+    return { source: meta.source || '', source_date: meta.source_date || '', origin: meta.origin || '塾', reason: pool === 'new' ? '' : (meta.reason || ''), pool: pool };
+  }
+
+  // 漢字まとめ: 1行1問「例文,答え,読み[,出題表記]」。カンマまたはタブ区切り（Excel からの貼り付け可）
+  function parseKanji(text) {
+    var existing = {};
+    (keys || []).forEach(function (k) { existing[k.join('|')] = true; });
+    var seen = {};
+    return text.split(/\r?\n/).map(function (line, n) { return { n: n, line: line }; })
+      .filter(function (x) { return x.line.trim(); })
+      .map(function (x) {
+        var cols = x.line.split(/\t|,/).map(function (s) { return s.trim(); });
+        // 4列目以降は意味（答えの画面に「いみ」として表示）。4列目がかなだけなら従来どおり出題表記で、その次が意味
+        var rest = cols.slice(3).filter(function (v) { return v; });
+        var pf = rest.length && /^[ぁ-ゟァ-ヿー]+$/.test(rest[0]) ? rest.shift() : '';
+        var r = { line: x.line, sentence: cols[0] || '', answer: cols[1] || '', reading: cols[2] || '', prompt_form: pf, meaning: rest.join('、'), error: '' };
+        var t = KS.fromTestForm(r.sentence, r.answer, r.reading);
+        if (t) { r.sentence = t.sentence; if (!r.prompt_form) r.prompt_form = t.prompt_form; }
+        var key = ['A', r.sentence, r.answer, ''].join('|');
+        if (cols.length < 3) r.error = '「例文,答え,読み」の3列以上にしてください';
+        else if (!r.sentence || !r.answer || !r.reading) r.error = '空の列があります';
+        else if (r.sentence.indexOf(r.answer) < 0) r.error = '例文に「' + r.answer + '」がありません';
+        else if (!/^[ぁ-ゟー]+$/.test(r.reading)) r.error = '読みはひらがなで';
+        else if (r.prompt_form && !/^[ぁ-ゟァ-ヿー]+$/.test(r.prompt_form)) r.error = '出題表記はかなで';
+        else if (seen[key]) r.error = '同じ行があります';
+        else if (existing[key]) r.error = '登録済みです';
+        seen[key] = true;
+        return r;
+      });
+  }
+
+  function kanjiForm() {
+    var ta = h('textarea', { class: 'input', placeholder: '大学のコウギを受ける,講義,こうぎ,大学などで先生が話して教えること\nスープがアタタかい,温かい,あたたかい',
+      value: meta.kanjiDraft || '', oninput: function () { meta.kanjiDraft = ta.value; saveMeta(); preview(); } });
+    var readChk = h('input', { type: 'checkbox' });
+    readChk.checked = !!meta.makeRead;
+    readChk.addEventListener('change', function () { meta.makeRead = readChk.checked; saveMeta(); });
+    var table = h('table', { class: 'pv' });
+    var btn = h('button', { class: 'btn', text: '登録', onclick: submit });
+    function preview() {
+      var rows = parseKanji(ta.value);
+      var ok = rows.filter(function (r) { return !r.error; });
+      table.replaceChildren.apply(table, [h('tr', {}, [h('th', { text: '出題' }), h('th', { text: '答え' }), h('th', { text: '' })])].concat(
+        rows.map(function (r) {
+          if (r.error) return h('tr', {}, [h('td', { class: 'mid', text: r.error + '：' + r.line }), h('td', { text: r.answer }), h('td', { class: 'mid', text: '!' })]);
+          var p = KS.promptParts({ sentence: r.sentence, answer: r.answer, reading: r.reading, prompt_form: r.prompt_form, direction: 'write' });
+          return h('tr', {}, [h('td', {}, [p.before, h('mark', { text: p.mark }), p.after,
+            r.meaning ? h('div', { class: 'muted', style: 'font-size:12px', text: 'いみ：' + r.meaning }) : null]),
+            h('td', { text: r.answer }), h('td', { class: 'ok', text: '✓' })]);
+        })));
+      btn.textContent = ok.length ? ok.length + '件を登録' : '登録';
+      btn.disabled = !ok.length;
+    }
+    function submit() {
+      var rows = parseKanji(ta.value);
+      var ok = rows.filter(function (r) { return !r.error; });
+      if (!ok.length) return;
+      var m = metaValues();
+      btn.disabled = true;
+      call('addItems', ok.map(function (r) {
+        return { type: 'A', subject: '国語', unit: '漢字', sentence: r.sentence, answer: r.answer, reading: r.reading,
+          prompt_form: r.prompt_form, explanation: r.meaning, source: m.source, source_date: m.source_date, reason: m.reason, origin: m.origin, pool: m.pool,
+          make_read: readChk.checked };
+      })).then(function (res) {
+        // 登録できなかった行と、もともとエラーだった行だけ入力欄に残す
+        var failed = {};
+        res.skipped.forEach(function (s) { failed[s.index] = s.reason; });
+        var keep = rows.filter(function (r) { return r.error; }).map(function (r) { return r.line; })
+          .concat(ok.filter(function (r, i) { return failed[i] !== undefined; }).map(function (r) { return r.line; }));
+        ta.value = keep.join('\n');
+        meta.kanjiDraft = ta.value;
+        saveMeta();
+        items = null; units = null; keys = null;
+        KS.toast(res.added + '件登録しました' + (res.skipped.length ? '（' + res.skipped.length + '件は登録できず）' : ''));
+        preview();
+      }).catch(fail).then(function () { btn.disabled = false; preview(); });
+    }
+    // 重複チェック用に一覧を読み込んでおく
+    if (!keys) call('listKeys').then(function (r) { keys = r; preview(); }).catch(function () {});
+    setTimeout(preview);
+    return h('div', { class: 'form' }, commonMeta().concat([
+      field('1行1問「例文,答え,読み,意味」。意味は省略してもよい（答えの画面に表示）。例文はテストのままカタカナでも、漢字に直してもよい（カンマかタブ区切り。意味の中の区切りは「、」）', ta),
+      table,
+      h('label', { class: 'chk' }, [readChk, '読みのカードも作る（まちがえた問題のとき。新しい問題は書き・読みの両方を自動で作ります）']),
+      btn
+    ]));
+  }
+
+  // 写真スロット（撮る／選ぶ → 縮小してプレビュー）
+  function slot(title) {
+    var s = { dataUrl: null };
+    var img = h('img', { alt: title, hidden: true });
+    var status = h('div', { class: 't', text: title });
+    function onPick(e) {
+      var f = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!f) return;
+      status.textContent = title + '（縮小中…）';
+      KS.resizeImage(f).then(function (url) {
+        s.dataUrl = url;
+        img.src = url;
+        img.hidden = false;
+        status.textContent = title;
+      }, function (err) { status.textContent = title + '：' + KS.message(err); });
+    }
+    var id = 'f' + Math.random().toString(36).slice(2);
+    var cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', id: id + 'c', onchange: onPick });
+    var lib = h('input', { type: 'file', accept: 'image/*', id: id + 'l', onchange: onPick });
+    s.el = h('div', { class: 'slot' }, [status, img, h('div', { class: 'btns' }, [
+      h('label', { class: 'btn ghost', for: id + 'c', text: '📷 撮る' }), h('label', { class: 'btn ghost', for: id + 'l', text: '選ぶ' })
+    ]), cam, lib]);
+    s.clear = function () { s.dataUrl = null; img.hidden = true; img.removeAttribute('src'); };
+    return s;
+  }
+
+  function jobsEl() {
+    var box = h('div', { class: 'jobs' });
+    jobs.slice(-5).reverse().forEach(function (j) {
+      var cls = j.status === 'done' ? 'ok' : j.status === 'error' ? 'ng' : 'muted';
+      var label = j.status === 'done' ? '保存済み' : j.status === 'error' ? '失敗: ' + j.error : '保存中…';
+      box.appendChild(h('div', { class: cls }, [j.label + ' — ' + label,
+        j.status === 'error' ? h('button', { class: 'chip', text: 'もう一度', onclick: function () { runJob(j); render(); } }) : null]));
+    });
+    return box;
+  }
+
+  // 写真の保存は待たずに次の入力へ進める（保存に約3秒かかるため）
+  function runJob(j) {
+    j.status = 'saving';
+    var up = function (url) { return url ? call('uploadPhoto', url).then(function (r) { return r.id; }) : Promise.resolve(''); };
+    Promise.all([j.photoQ ? (j.qId ? Promise.resolve(j.qId) : up(j.photoQ)) : Promise.resolve(''),
+      j.photoA ? (j.aId ? Promise.resolve(j.aId) : up(j.photoA)) : Promise.resolve('')])
+      .then(function (ids) {
+        j.qId = ids[0];
+        j.aId = ids[1];
+        var it = Object.assign({}, j.item, { photo_q: ids[0], photo_a: ids[1] });
+        return call('addItems', [it]);
+      }).then(function (res) {
+        if (res.skipped.length) throw new Error(res.skipped[0].reason);
+        j.status = 'done';
+        j.photoQ = j.photoA = null; // メモリを空ける
+        items = null; units = null; keys = null;
+      }).catch(function (e) { j.status = 'error'; j.error = KS.message(e); })
+      .then(function () { if (tab === 'add') render(); });
+  }
+
+  function photoForm() {
+    var q = slot('問題の写真'), a = slot('答え・解説の写真（任意）');
+    var ans = h('input', { class: 'input', placeholder: '例: 12km（写真だけなら空でよい）' });
+    var exp = h('textarea', { class: 'input', placeholder: '例: 速さの単位を分→時に直し忘れ', style: 'min-height:72px;font-family:inherit' });
+    var btn = h('button', { class: 'btn', text: '登録して次へ', onclick: function () {
+      if (!q.dataUrl) { KS.toast('問題の写真を撮ってください', 'error'); return; }
+      var m = metaValues();
+      var j = {
+        label: [meta.subject, m.source, meta.qno].filter(Boolean).join(' '),
+        photoQ: q.dataUrl, photoA: a.dataUrl,
+        item: { type: meta.ptype || 'B', subject: meta.subject || '算数', unit: meta.unit || '', qno: meta.qno || '',
+          answer: ans.value.trim(), explanation: exp.value.trim(), source: m.source, source_date: m.source_date,
+          reason: m.reason, origin: m.origin, pool: m.pool }
+      };
+      jobs.push(j);
+      runJob(j);
+      q.clear(); a.clear(); ans.value = ''; exp.value = '';
+      meta.qno = '';
+      saveMeta();
+      render();
+      KS.toast('保存を始めました。次の問題をどうぞ');
+    } });
+    return h('div', { class: 'form' }, [
+      h('div', { class: 'row2' }, [field('科目', sel('subject', SUBJECTS, '算数')), field('型', sel('ptype', TYPES, 'B'))]),
+      h('div', { class: 'row2' }, [field('単元', txt('unit', '例: 速さ')), field('問題番号', txt('qno', '例: 大問2(3)'))])
+    ].concat(commonMeta(), [
+      h('div', { class: 'slots' }, [q.el, a.el]),
+      field('答え（任意）', ans),
+      field('解説・どこで間違えたか（任意）', exp),
+      btn,
+      jobsEl()
+    ]));
+  }
+
+  // 一問一答のまとめ登録: 1行1問「問題,答え,解説」。タブを含む行はタブで区切る（Excel などからの貼り付け）。
+  // 3列目以降は解説（問題文の中の読点は「、」を使う）
+  function parseQA(text, type) {
+    var existing = {};
+    (keys || []).forEach(function (k) { existing[k.join('|')] = true; });
+    var seen = {};
+    return text.split(/\r?\n/).filter(function (line) { return line.trim(); }).map(function (line) {
+      var cols = (line.indexOf('\t') >= 0 ? line.split('\t') : line.split(',')).map(function (v) { return v.trim(); });
+      var r = { line: line, sentence: cols[0] || '', answer: cols[1] || '', explanation: cols.slice(2).filter(Boolean).join('、'), error: '' };
+      var key = [type, r.sentence, r.answer, ''].join('|');
+      if (!r.sentence || !r.answer) r.error = '「問題,答え」の2列以上にしてください';
+      else if (seen[key]) r.error = '同じ行があります';
+      else if (existing[key]) r.error = '登録済みです';
+      seen[key] = true;
+      return r;
+    });
+  }
+
+  function manualForm() {
+    var mode = meta.manualMode || 'one';
+    var modeSeg = h('div', { class: 'sub', style: 'border:1px solid var(--line);border-radius:10px' }, [['one', '1問ずつ'], ['bulk', 'まとめて（1行1問）']].map(function (x) {
+      return h('button', { class: x[0] === mode ? 'on' : '', text: x[1], onclick: function () { meta.manualMode = x[0]; saveMeta(); render(); } });
+    }));
+    var head = [
+      modeSeg,
+      h('div', { class: 'row2' }, [field('科目', sel('msubject', SUBJECTS, '社会')), field('型', sel('mtype', TYPES, 'A'))]),
+      field('単元（新しい問題のときはチャレンジの種類の名前になる）', txt('unit', '例: 地理'))
+    ].concat(commonMeta());
+    if (mode === 'bulk') return h('div', { class: 'form' }, head.concat(bulkQA()));
+
+    var qIn = h('textarea', { class: 'input', placeholder: '例: 日本で一番長い川は？', style: 'min-height:72px;font-family:inherit' });
+    var aIn = h('input', { class: 'input', placeholder: '例: 信濃川' });
+    var eIn = h('textarea', { class: 'input', placeholder: '（任意）', style: 'min-height:60px;font-family:inherit' });
+    var btn = h('button', { class: 'btn', text: '登録', onclick: function () {
+      var m = metaValues();
+      var it = { type: meta.mtype || 'A', subject: meta.msubject || '社会', unit: meta.unit || '', sentence: qIn.value.trim(),
+        answer: aIn.value.trim(), explanation: eIn.value.trim(), source: m.source, source_date: m.source_date,
+        reason: m.reason, origin: m.origin, pool: m.pool };
+      btn.disabled = true;
+      call('addItems', [it]).then(function (res) {
+        if (res.skipped.length) throw new Error(res.skipped[0].reason);
+        qIn.value = ''; aIn.value = ''; eIn.value = '';
+        items = null; units = null; keys = null;
+        KS.toast('登録しました');
+      }).catch(fail).then(function () { btn.disabled = false; });
+    } });
+    return h('div', { class: 'form' }, head.concat([
+      field('問題文', qIn), field('答え', aIn), field('解説（任意）', eIn), btn
+    ]));
+  }
+
+  function bulkQA() {
+    var ta = h('textarea', { class: 'input', value: meta.qaDraft || '',
+      placeholder: '日本で一番長い川は？,信濃川,長さ367km。2位は利根川\n太陽のまわりを回る星を何という？,惑星',
+      oninput: function () { meta.qaDraft = ta.value; saveMeta(); preview(); } });
+    var table = h('table', { class: 'pv' });
+    var btn = h('button', { class: 'btn', text: '登録', onclick: submit });
+    function type() { return meta.mtype || 'A'; }
+    function preview() {
+      var rows = parseQA(ta.value, type());
+      var ok = rows.filter(function (r) { return !r.error; });
+      table.replaceChildren.apply(table, [h('tr', {}, [h('th', { text: '問題' }), h('th', { text: '答え' }), h('th', { text: '' })])].concat(
+        rows.map(function (r) {
+          if (r.error) return h('tr', {}, [h('td', { class: 'mid', text: r.error + '：' + r.line }), h('td', { text: r.answer }), h('td', { class: 'mid', text: '!' })]);
+          return h('tr', {}, [h('td', {}, [r.sentence, r.explanation ? h('div', { class: 'muted', style: 'font-size:12px', text: '解説：' + r.explanation }) : null]),
+            h('td', { text: r.answer }), h('td', { class: 'ok', text: '✓' })]);
+        })));
+      btn.textContent = ok.length ? ok.length + '件を登録' : '登録';
+      btn.disabled = !ok.length;
+    }
+    function submit() {
+      var rows = parseQA(ta.value, type());
+      var ok = rows.filter(function (r) { return !r.error; });
+      if (!ok.length) return;
+      var m = metaValues();
+      btn.disabled = true;
+      call('addItems', ok.map(function (r) {
+        return { type: type(), subject: meta.msubject || '社会', unit: meta.unit || '', sentence: r.sentence, answer: r.answer,
+          explanation: r.explanation, source: m.source, source_date: m.source_date, reason: m.reason, origin: m.origin, pool: m.pool };
+      })).then(function (res) {
+        // 登録できなかった行と、もともとエラーだった行だけ入力欄に残す
+        var failed = {};
+        res.skipped.forEach(function (s) { failed[s.index] = s.reason; });
+        ta.value = rows.filter(function (r) { return r.error; }).map(function (r) { return r.line; })
+          .concat(ok.filter(function (r, i) { return failed[i] !== undefined; }).map(function (r) { return r.line; })).join('\n');
+        meta.qaDraft = ta.value;
+        saveMeta();
+        items = null; units = null; keys = null;
+        KS.toast(res.added + '件登録しました' + (res.skipped.length ? '（' + res.skipped.length + '件は登録できず）' : ''));
+        call('listKeys').then(function (r) { keys = r; preview(); }).catch(function () {});
+      }).catch(fail).then(function () { btn.disabled = false; preview(); });
+    }
+    if (!keys) call('listKeys').then(function (r) { keys = r; preview(); }).catch(function () {});
+    setTimeout(preview);
+    return [
+      field('1行1問「問題,答え,解説」。解説は省略してもよい（カンマかタブ区切り。Excel やスプレッドシートからの貼り付けも可。文の中の区切りは「、」）', ta),
+      table,
+      btn
+    ];
+  }
+
+  // ───── 一覧 ─────
+  function label(i) {
+    if (i.type === 'A' && i.reading) {
+      var p = KS.promptParts({ sentence: i.sentence, answer: i.answer, reading: i.reading, prompt_form: i.prompt_form, direction: 'write' });
+      return [p.before, h('mark', { text: p.mark }), p.after];
+    }
+    if (i.photo_q && !i.sentence) return ['（写真）' + [i.source, i.qno].filter(Boolean).join(' ')];
+    return [i.sentence];
+  }
+  function dots(list) {
+    return h('div', { class: 'dots' }, list.map(function (r) {
+      return h('span', { class: r === '○' ? 'ok' : r === '△' ? 'mid' : 'ng', text: r });
+    }));
+  }
+  function stageEl(s) {
+    var boxes = [];
+    for (var k = 0; k < 6; k++) boxes.push(h('i', { class: s.state === 'graduated' || k < s.stage ? 'f' : '' }));
+    return h('div', { class: 'stage', title: '段階 ' + s.stage + '/6' }, boxes);
+  }
+
+  // 一覧はサーバー側で「登録先」と「単元」を絞って読み込む（新しい問題は千件以上あるため、単元ごとに読む）
+  function renderList(body) {
+    if (!units) {
+      body.appendChild(h('div', { class: 'empty', text: '読み込み中…' }));
+      call('listUnits').then(function (r) { units = r; if (tab === 'list') render(); }).catch(fail);
+      return;
+    }
+    var newUnits = units.filter(function (u) { return u.pool === 'new'; });
+    if (filters.pool === 'new' && !newUnits.some(function (u) { return u.unit === filters.unit; })) filters.unit = newUnits.length ? newUnits[0].unit : '';
+    if (!items) {
+      body.appendChild(h('div', { class: 'empty', text: '読み込み中…' }));
+      var opts = filters.pool === 'new' ? { pool: 'new', unit: filters.unit } : { pool: 'mistake' };
+      call('listItems', opts).then(function (r) { items = r; if (tab === 'list') render(); }).catch(fail);
+      return;
+    }
+    var poolSel = h('select', { onchange: function () { filters.pool = poolSel.value; items = null; units = null; keys = null; render(); } },
+      POOLS.map(function (p) { return h('option', { value: p[0], text: p[0] === 'new' ? '新しい問題' : p[1] }); }));
+    poolSel.value = filters.pool;
+    // 新しい問題は単元（チャレンジの種類）ごとに見る。「覚えていた」の数も出す
+    var unitSel = filters.pool === 'new' ? h('select', { onchange: function () { filters.unit = unitSel.value; items = null; units = null; keys = null; render(); } },
+      newUnits.map(function (u) { return h('option', { value: u.unit, text: (u.unit || '（単元なし）') + '（' + u.n + '・覚えていた' + u.known + '）' }); })) : null;
+    if (unitSel) unitSel.value = filters.unit;
+    var subjSel = h('select', { onchange: function () { filters.subject = subjSel.value; draw(); } },
+      [h('option', { value: '', text: '科目: すべて' })].concat(SUBJECTS.map(function (s) { return h('option', { value: s, text: s }); })));
+    var stSel = h('select', { onchange: function () { filters.state = stSel.value; draw(); } },
+      [h('option', { value: '', text: '状態: すべて' })].concat(Object.keys(STATES).map(function (k) { return h('option', { value: k, text: STATES[k] }); })));
+    var rsSel = h('select', { onchange: function () { filters.reason = rsSel.value; draw(); } },
+      [h('option', { value: '', text: '理由: すべて' })].concat(REASONS.map(function (s) { return h('option', { value: s, text: s }); })));
+    var qIn = h('input', { type: 'search', placeholder: '検索', value: filters.q, oninput: function () { filters.q = qIn.value; draw(); } });
+    subjSel.value = filters.subject; stSel.value = filters.state; rsSel.value = filters.reason;
+    var list = h('div', { class: 'list' });
+    body.appendChild(h('div', { class: 'filters' }, [poolSel, unitSel, subjSel, stSel, rsSel, qIn,
+      h('button', { class: 'chip', text: '↻', title: '再読み込み', onclick: function () { items = null; units = null; render(); } })]));
+    body.appendChild(list);
+    function draw() {
+      var q = filters.q.trim();
+      var shown = items.filter(function (i) {
+        return (!filters.subject || i.subject === filters.subject) && (!filters.state || i.stats.state === filters.state) &&
+          (!filters.reason || i.reason === filters.reason) &&
+          (!q || [i.sentence, i.answer, i.reading, i.source, i.qno, i.explanation].join(' ').indexOf(q) >= 0);
+      });
+      if (!shown.length) { list.replaceChildren(h('div', { class: 'empty', text: items.length ? '該当なし' : 'まだ問題がありません。「登録」から追加してください' })); return; }
+      list.replaceChildren.apply(list, shown.map(function (i) {
+        var s = i.stats;
+        var md = function (d) { return d ? Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10)) : ''; };
+        var when = s.state === 'graduated' ? '卒業 ' + md(s.graduated_on) : s.state === 'suspended' ? '停止中' : s.state === 'known' ? 'チャレンジで○'
+          : s.state === 'new' ? (i.pool === 'new' ? 'チャレンジ待ち' : '未出題') : '次回 ' + md(s.next);
+        var dirs = s.directions.map(function (d) { return d === 'write' ? '書き' : d === 'read' ? '読み' : ''; }).filter(Boolean).join('+');
+        var metaLine = [i.pool === 'new' ? '新しい問題' : '', dirs || i.subject, when, s.reps + '回', s.correct === null ? '' : '正答' + s.correct + '%'].filter(Boolean).join('・');
+        return h('div', { class: 'item', onclick: function () { openDetail(i); } }, [
+          h('div', { class: 'q' }, label(i)), stageEl(s), h('div', { class: 'meta', text: metaLine }), dots(s.last5)
+        ]);
+      }));
+      document.querySelector('header.top b').textContent = '問題一覧（' + shown.length + '/' + items.length + '件' + (items.length >= 300 ? '・先頭300件' : '') + '）';
+    }
+    draw();
+  }
+
+  function openDetail(i) {
+    var dlg = h('dialog');
+    var inputs = {};
+    var fields = [['sentence', i.photo_q && !i.sentence ? '問題文（任意）' : (i.reading ? '例文' : '問題文')], ['answer', '答え']];
+    if (i.reading) fields.push(['reading', '読み（ひらがな）'], ['prompt_form', '出題表記（任意）']);
+    fields.push(['explanation', '解説'], ['unit', '単元'], ['source', '出典'], ['qno', '問題番号'], ['source_date', '日付']);
+    var formEls = fields.map(function (f) {
+      var el = f[0] === 'explanation' || f[0] === 'sentence'
+        ? h('textarea', { class: 'input', style: 'min-height:60px;font-family:inherit', value: i[f[0]] })
+        : h('input', { class: 'input', type: f[0] === 'source_date' ? 'date' : 'text', value: i[f[0]] });
+      inputs[f[0]] = el;
+      return field(f[1], el);
+    });
+    var subjSel = h('select', { class: 'input' }, SUBJECTS.map(function (s) { return h('option', { value: s, text: s }); }));
+    subjSel.value = i.subject;
+    var poolSel = h('select', { class: 'input' }, POOLS.map(function (p) { return h('option', { value: p[0], text: p[1] }); }));
+    poolSel.value = i.pool || 'mistake';
+    var rsSel = h('select', { class: 'input' }, [h('option', { value: '', text: '（なし）' })].concat(REASONS.map(function (s) { return h('option', { value: s, text: s }); })));
+    rsSel.value = i.reason;
+    var photos = h('div', { class: 'photos' });
+    [i.photo_q_url, i.photo_a_url].filter(Boolean).forEach(function (url) {
+      photos.appendChild(h('img', { src: url, alt: '写真', onclick: function () {
+        var ov = h('div', { class: 'overlay', onclick: function () { ov.remove(); } }, [h('img', { src: url, alt: '拡大' })]);
+        document.body.appendChild(ov);
+      } }));
+    });
+    var hist = h('table', { class: 'hist' }, [h('tr', {}, [h('td', { class: 'muted', text: '履歴を読み込み中…' })])]);
+    function loadHistory() {
+      call('itemHistory', i.item_id).then(function (rows) {
+        if (!rows.length) { hist.replaceChildren(h('tr', {}, [h('td', { class: 'muted', text: 'まだ解いていません' })])); return; }
+        hist.replaceChildren.apply(hist, rows.map(function (r) {
+          // 1件ずつ消す（テストで解いた記録を取り消す）。残りの記録からカードの状態を作り直す
+          var rm = h('button', { class: 'chip', title: 'この記録を消す', text: '🗑', onclick: function () {
+            if (!confirm(r.study_day + ' の「' + r.result + '」の記録を消しますか？')) return;
+            rm.disabled = true;
+            call('deleteReviews', [r.review_id]).then(function () { items = null; units = null; keys = null; KS.toast('記録を消しました'); loadHistory(); }, fail);
+          } });
+          return h('tr', {}, [h('td', { text: r.study_day }), h('td', { text: r.direction === 'write' ? '書き' : r.direction === 'read' ? '読み' : '' }),
+            h('td', { class: r.result === '○' ? 'ok' : r.result === '△' ? 'mid' : 'ng', text: r.result }),
+            h('td', { class: 'muted', text: '段階 ' + r.stage_before + '→' + r.stage_after }), h('td', { class: 'muted', text: r.duration_sec + '秒' }),
+            h('td', {}, [rm])]);
+        }));
+      }).catch(function () {});
+    }
+    loadHistory();
+
+    function done(msg) { dlg.close(); dlg.remove(); items = null; units = null; keys = null; KS.toast(msg); render(); }
+    var save = h('button', { class: 'btn', text: '保存', onclick: function () {
+      var f = { subject: subjSel.value, reason: rsSel.value, pool: poolSel.value };
+      Object.keys(inputs).forEach(function (k) { f[k] = inputs[k].value.trim(); });
+      save.disabled = true;
+      call('updateItem', i.item_id, f).then(function () { done('保存しました'); }, function (e) { save.disabled = false; fail(e); });
+    } });
+    var pause = h('button', { class: 'btn ghost', text: i.status === 'suspended' ? '再開' : '一時停止', onclick: function () {
+      call('setStatus', i.item_id, i.status === 'suspended' ? 'active' : 'suspended').then(function () { done(i.status === 'suspended' ? '再開しました' : '停止しました'); }, fail);
+    } });
+    var del = h('button', { class: 'btn danger', text: '削除', onclick: function () {
+      if (!confirm('この問題を削除しますか？（一覧と出題から外れます。解いた記録はデータとして残ります）')) return;
+      call('setStatus', i.item_id, 'deleted').then(function () { done('削除しました'); }, fail);
+    } });
+    var resetBtn = h('button', { class: 'btn danger', text: 'この問題の記録をすべて消す（未出題に戻す）', onclick: function () {
+      if (!confirm('この問題の解いた記録をすべて消して、未出題に戻しますか？')) return;
+      call('resetItem', i.item_id).then(function (r) { done('記録を' + r.deleted + '件消しました'); }, fail);
+    } });
+    dlg.appendChild(h('div', { class: 'form' }, [
+      h('div', { class: 'q', style: 'font-size:17px' }, label(i)),
+      photos,
+      field('登録先', poolSel),
+      h('div', { class: 'row2' }, [field('科目', subjSel), field('間違えた理由', rsSel)])
+    ].concat(formEls, [
+      h('div', { class: 'actions' }, [save, pause, del]),
+      h('div', { class: 'muted', style: 'font-size:13px', text: '解答の履歴（新しい順・最大30件）' }),
+      hist,
+      resetBtn,
+      h('button', { class: 'btn ghost', text: '閉じる', onclick: function () { dlg.close(); dlg.remove(); items = null; units = null; keys = null; render(); } })
+    ])));
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // ───── 状況 ─────
+  function renderStatus(body) {
+    body.appendChild(h('div', { class: 'empty', text: '読み込み中…' }));
+    call('getOverview').then(function (o) {
+      if (tab !== 'status') return;
+      var max = Math.max.apply(null, o.forecast.map(function (f) { return f.count; }).concat([1]));
+      var mins = Math.floor(o.todaySeconds / 60), secs = o.todaySeconds % 60;
+      body.replaceChildren(
+        h('div', { class: 'kpis' }, [
+          h('div', { class: 'kpi' }, [h('b', { text: '🔥 ' + o.streak + '日' }), h('span', { text: '連続（チケット残り' + o.freezesLeft + '）' })]),
+          h('div', { class: 'kpi' }, [h('b', { text: o.todayDone ? '済み' : 'まだ' }),
+            h('span', { text: o.todayDone ? '今日の分（' + o.todayCards + '問・' + mins + '分' + secs + '秒）' : '今日の分' })]),
+          h('div', { class: 'kpi' }, [h('b', { text: o.items }), h('span', { text: '登録した問題（未出題のカード ' + o.fresh + '・チャレンジ待ち ' + o.challenge + '・チャレンジで○ ' + o.known + '）' })]),
+          h('div', { class: 'kpi' }, [h('b', { text: o.graduated }), h('span', { text: '卒業したカード（全 ' + o.cards + '）' })])
+        ]),
+        h('div', { class: 'sec', text: '今後7日の出題予定（今日の分には期限切れを含む。新しいカードは含まない）' }),
+        h('div', { class: 'week' }, o.forecast.map(function (f, k) {
+          return h('div', {}, [h('b', { text: f.count }), h('i', { style: 'height:' + Math.round(f.count / max * 100) + 'px' }),
+            k === 0 ? '今日' : Number(f.day.slice(5, 7)) + '/' + Number(f.day.slice(8, 10))]);
+        })),
+        h('div', { class: 'sec', text: '×が3回以上の問題（覚え方を変える候補）' }),
+        o.struggling.length
+          ? h('div', { class: 'list' }, o.struggling.map(function (s) {
+            return h('div', { class: 'item' }, [h('div', { class: 'q', text: s.sentence || [s.source, s.qno].join(' ') }),
+              h('div', { class: 'ng', text: '×' + s.lapses }), h('div', { class: 'meta', text: '答え: ' + s.answer })]);
+          }))
+          : h('div', { class: 'empty', text: 'ありません' }),
+        photoMeter(o.photos),
+        resetDayBox(o.today),
+        exportBox()
+      );
+    }).catch(fail);
+  }
+
+  // 写真用データベースは無料プランで500MBまで。8割を超えたら知らせる
+  function photoMeter(p) {
+    var mb = function (b) { return (b / 1000 / 1000).toFixed(1); };
+    var pct = Math.min(100, Math.round(p.bytes / p.limit * 100));
+    return h('div', {}, [
+      h('div', { class: 'sec', text: '写真の保存容量（' + p.count + '枚）' }),
+      h('div', { style: 'padding:0 16px' }, [
+        h('div', { style: 'height:10px;background:var(--line);border-radius:5px;overflow:hidden' },
+          [h('i', { style: 'display:block;height:100%;width:' + pct + '%;background:' + (pct >= 80 ? 'var(--ng)' : 'var(--accent)') })]),
+        h('div', { class: pct >= 80 ? 'ng' : 'muted', style: 'font-size:12px;margin-top:4px',
+          text: mb(p.bytes) + 'MB / ' + mb(p.limit) + 'MB' + (pct >= 80 ? '（残りわずか。写真用データベースの追加が必要です）' : '') })
+      ])
+    ]);
+  }
+
+  // ある日の記録をまとめて消す（テストで解いた日を取り消す）。その日の「終えた」記録と連続日数も元に戻る
+  function resetDayBox(todayStr) {
+    var d = h('input', { class: 'input', type: 'date', value: todayStr });
+    var btn = h('button', { class: 'btn danger', text: 'この日の記録を消す', onclick: function () {
+      if (!d.value) return;
+      if (!confirm(d.value + ' に解いた記録をすべて消しますか？（その日の「おわり」と連続日数の記録も取り消され、その日の問題はもう一度出題されます）')) return;
+      btn.disabled = true;
+      call('resetDay', d.value).then(function (r) {
+        items = null; units = null; keys = null;
+        KS.toast(d.value + ' の記録を' + r.deleted + '件消しました');
+        render();
+      }, function (e) { btn.disabled = false; fail(e); });
+    } });
+    return h('div', {}, [h('div', { class: 'sec', text: '解いた記録の取り消し（テストで解いた日など）' }),
+      h('div', { class: 'form', style: 'flex-direction:row' }, [d, btn])]);
+  }
+
+  // CSV 書き出し（Excel で文字化けしないよう BOM 付き UTF-8）
+  var EXPORTS = [['items', '問題'], ['reviews', '解答の記録'], ['cards', 'カード（復習の予定）'], ['days', '日ごとの記録']];
+  function exportBox() {
+    var s = h('select', { class: 'input' }, EXPORTS.map(function (e) { return h('option', { value: e[0], text: e[1] }); }));
+    var btn = h('button', { class: 'btn ghost', text: 'CSVで書き出す', onclick: function () {
+      btn.disabled = true;
+      exportCsv(s.value).catch(fail).then(function () { btn.disabled = false; });
+    } });
+    return h('div', {}, [h('div', { class: 'sec', text: 'データの書き出し' }), h('div', { class: 'form', style: 'flex-direction:row' }, [s, btn])]);
+  }
+  function exportCsv(name) {
+    var rows = [];
+    function page(offset) {
+      return call('exportTable', name, offset).then(function (r) {
+        rows = rows.concat(r.rows);
+        return r.next === null ? rows : page(r.next);
+      });
+    }
+    return page(0).then(function (all) {
+      if (!all.length) { KS.toast('データがありません'); return; }
+      var cols = Object.keys(all[0]);
+      var esc = function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      var csv = '﻿' + [cols.join(',')].concat(all.map(function (r) { return cols.map(function (c) { return esc(r[c]); }).join(','); })).join('\r\n');
+      var a = h('a', { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })), download: 'kanji-srs_' + name + '_' + today() + '.csv' });
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
