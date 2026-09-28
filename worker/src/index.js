@@ -3,7 +3,7 @@
 // 無料プランの制約に合わせている: 1回の呼び出しで命令50個まで・CPU時間が短い → 集計はSQL、複数行の書き込みは json_each で1命令にまとめる
 import {
   DEFAULT_SETTINGS, RESULT_MARK, ITEM_FIELDS,
-  studyDay, addDays, schedule, cost, streak, normalizeItem, dupKey, replay
+  studyDay, addDays, cost, streak, normalizeItem, dupKey, replay, answer
 } from './logic.js';
 
 const PHOTO_MAX_BYTES = 1500000;
@@ -11,9 +11,9 @@ const PHOTO_URL_DAYS = 2;
 const LOCK_FAILS = 10;
 const LOCK_MS = 10 * 60 * 1000;
 
-const ITEM_COLS = ['item_id', ...ITEM_FIELDS, 'created_at', 'status'];
+const ITEM_COLS = ['item_id', ...ITEM_FIELDS, 'registered_pool', 'created_at', 'status'];
 const CARD_COLS = ['card_id', 'item_id', 'direction', 'stage', 'due', 'state', 'reps', 'lapses', 'last_result', 'last_reviewed_at', 'introduced_on'];
-const REVIEW_COLS = ['review_id', 'card_id', 'answered_at', 'study_day', 'result', 'duration_sec', 'stage_before', 'stage_after'];
+const REVIEW_COLS = ['review_id', 'card_id', 'answered_at', 'study_day', 'result', 'duration_sec', 'stage_before', 'stage_after', 'mode'];
 // 出題に使う問題の列（カードと結合するときの名前の衝突を避けて明示する）
 const ITEM_VIEW = ITEM_FIELDS.map((k) => 'i.' + k).join(', ');
 
@@ -38,6 +38,8 @@ export default {
 const API = {
   whoami: ['study', async (c, role) => ({ role })],
   getToday: ['study', getToday],
+  getChallengeDecks: ['study', getChallengeDecks],
+  getChallenge: ['study', getChallenge],
   submitReviews: ['study', submitReviews],
   finishDay: ['study', finishDay],
   addItems: ['admin', addItems],
@@ -177,9 +179,12 @@ async function getToday(c) {
   const [daysRes, spentRes, introRes, gradRes] = await c.db.batch([
     c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
     // 削除・停止した問題（本番の動作確認用など）を解いた時間は、今日の予算に数えない
-    c.db.prepare("SELECT c.direction, i.photo_q FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE r.study_day = ? AND i.status = 'active'").bind(today),
-    // 今日出し始めた新しいカードの数。削除・停止した問題の分は数えない
-    c.db.prepare("SELECT COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id WHERE c.introduced_on = ? AND i.status = 'active'").bind(today),
+    // 新しい問題のチャレンジで解いた時間も数えない（間違えた問題の復習の量が減らないように）
+    c.db.prepare("SELECT c.direction, i.photo_q FROM reviews r JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id WHERE r.study_day = ? AND i.status = 'active' AND r.mode = 'daily'").bind(today),
+    // 今日出し始めた新しいカードの数。削除・停止した問題と、チャレンジで間違えて入ってきたカードは数えない
+    c.db.prepare(`SELECT COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id
+      WHERE c.introduced_on = ? AND i.status = 'active'
+        AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.card_id = c.card_id AND r.mode = 'new')`).bind(today),
     c.db.prepare("SELECT COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.status = 'active' AND c.state IN ('spot', 'retired')")
   ]);
   const dayRows = daysRes.results;
@@ -198,7 +203,7 @@ async function getToday(c) {
        CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT 500`).bind(today);
   const freshStmt = c.db.prepare(
     `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
-     WHERE i.status = 'active' AND c.state = 'new'
+     WHERE i.status = 'active' AND i.pool = 'mistake' AND c.state = 'new'
      ORDER BY CASE WHEN i.origin IN ('塾', '模試') THEN 0 ELSE 1 END, i.created_at, i.item_id,
        CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT ?`).bind(allowance);
   if (!done) {
@@ -245,7 +250,7 @@ async function getToday(c) {
     const [dueAll, freshAll, practiced] = await c.db.batch([dueStmt, freshStmt,
       c.db.prepare(`SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM reviews r
         JOIN cards c ON c.card_id = r.card_id JOIN items i ON i.item_id = c.item_id
-        WHERE r.study_day = ? AND i.status = 'active' GROUP BY c.card_id ORDER BY MIN(r.answered_at)`).bind(today)]);
+        WHERE r.study_day = ? AND i.status = 'active' AND r.mode = 'daily' GROUP BY c.card_id ORDER BY MIN(r.answered_at)`).bind(today)]);
     extra = dueAll.results.concat(freshAll.results);
     practice = practiced.results;
   }
@@ -273,36 +278,37 @@ async function submitReviews(c, role, list) {
   const cardIds = [...new Set(list.map((r) => String((r && r.card_id) || '')))];
   const [seenRes, cardsRes] = await c.db.batch([
     c.db.prepare('SELECT review_id FROM reviews WHERE review_id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(ids)),
-    c.db.prepare('SELECT card_id, state, stage, reps, lapses, introduced_on FROM cards WHERE card_id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(cardIds))
+    c.db.prepare('SELECT card_id, item_id, state, stage, reps, lapses, introduced_on FROM cards WHERE card_id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(cardIds))
   ]);
   const seen = new Set(seenRes.results.map((r) => r.review_id));
   const cardMap = Object.fromEntries(cardsRes.results.map((r) => [r.card_id, r]));
   const sorted = list.slice().sort((a, b) => (String(a.answered_at) < String(b.answered_at) ? -1 : 1));
   const added = [];
   const touched = {};
+  const toMistake = new Set();
   let duplicates = 0, skipped = 0;
   for (const r of sorted) {
     const rid = String((r && r.review_id) || '');
     if (!/^[\w-]{8,64}$/.test(rid) || !RESULT_MARK[r.result]) { skipped++; continue; }
     if (seen.has(rid)) { duplicates++; continue; }
     const card = cardMap[r.card_id];
-    if (!card || card.state === 'retired') { skipped++; continue; }
+    const mode = r.mode === 'new' ? 'new' : 'daily';
     let ms = Date.parse(r.answered_at);
     if (!isFinite(ms) || ms > c.now + 5 * 60000 || ms < c.now - 14 * 86400000) ms = c.now;
     const day = studyDay(ms, st.day_start_hour);
-    // まだ出していなかった新しいカード（終わったあとの「つづき」で解いた）は、ここで出し始めたことにする
-    if (card.state === 'new') Object.assign(card, { state: 'learning', stage: 0, introduced_on: day });
+    const n = card && answer(card, r.result, day, mode);
+    if (!n) { skipped++; continue; }
     const before = card.stage;
-    const n = schedule(card.state, card.stage, r.result, day);
     Object.assign(card, {
       state: n.state, stage: n.stage, due: n.due, reps: card.reps + 1, lapses: card.lapses + (n.lapse ? 1 : 0),
-      last_result: RESULT_MARK[r.result], last_reviewed_at: new Date(ms).toISOString()
+      last_result: RESULT_MARK[r.result], last_reviewed_at: new Date(ms).toISOString(), introduced_on: n.introduced_on
     });
+    if (n.toMistake) toMistake.add(card.item_id);
     touched[card.card_id] = card;
     added.push({
       review_id: rid, card_id: card.card_id, answered_at: new Date(ms).toISOString(), study_day: day,
       result: RESULT_MARK[r.result], duration_sec: Math.max(0, Math.min(600, Math.round(Number(r.duration_sec) || 0))),
-      stage_before: before, stage_after: n.stage
+      stage_before: before, stage_after: n.stage, mode
     });
     seen.add(rid);
   }
@@ -312,10 +318,12 @@ async function submitReviews(c, role, list) {
       c.db.prepare(`UPDATE cards SET ${upd.map((k) => `${k} = j.${k}`).join(', ')}
         FROM (SELECT ${['card_id', ...upd].map((k) => `json_extract(value, '$.${k}') AS ${k}`).join(', ')} FROM json_each(?)) AS j
         WHERE cards.card_id = j.card_id`).bind(JSON.stringify(Object.values(touched))),
-      c.db.prepare(`INSERT OR IGNORE INTO reviews (${REVIEW_COLS.join(', ')}) ${fromJson(REVIEW_COLS)}`).bind(JSON.stringify(added))
+      c.db.prepare(`INSERT OR IGNORE INTO reviews (${REVIEW_COLS.join(', ')}) ${fromJson(REVIEW_COLS)}`).bind(JSON.stringify(added)),
+      // チャレンジで△・×だった問題は「まちがえた問題」に移し、塾で間違えた問題と同じように復習に出す
+      c.db.prepare("UPDATE items SET pool = 'mistake' WHERE item_id IN (SELECT value FROM json_each(?))").bind(JSON.stringify([...toMistake]))
     ]);
   }
-  return { applied: added.length, duplicates, skipped };
+  return { applied: added.length, duplicates, skipped, toMistake: toMistake.size };
 }
 
 // info: { day, cards_done, seconds }
@@ -368,7 +376,7 @@ async function addItems(c, role, list) {
     if (existing.has(key)) { skipped.push({ index, reason: '登録済みです' }); return; }
     existing.add(key);
     // 同じ登録操作の中でも登録順に出題されるよう、1件ごとに1ミリ秒ずらす
-    const it = { ...n.item, item_id: id('i'), created_at: new Date(c.now + newItems.length).toISOString(), status: 'active' };
+    const it = { ...n.item, item_id: id('i'), registered_pool: n.item.pool, created_at: new Date(c.now + newItems.length).toISOString(), status: 'active' };
     newItems.push(it);
     const dirs = n.kanji ? (x.make_read ? ['write', 'read'] : ['write']) : ['single'];
     for (const d of dirs) {
@@ -389,7 +397,7 @@ async function listItems(c) {
   const [itemsRes, cardAgg, revAgg, last5] = await c.db.batch([
     c.db.prepare("SELECT * FROM items WHERE status <> 'deleted' ORDER BY created_at DESC, item_id"),
     c.db.prepare(`SELECT item_id, MIN(stage) AS stage, COUNT(*) AS n,
-        SUM(state IN ('spot', 'retired')) AS grad, SUM(state = 'new') AS fresh,
+        SUM(state IN ('spot', 'retired')) AS grad, SUM(state = 'new') AS fresh, SUM(state = 'known') AS known,
         MIN(CASE WHEN state = 'learning' AND due <> '' THEN due END) AS next,
         MAX(CASE WHEN state IN ('spot', 'retired') THEN substr(last_reviewed_at, 1, 10) END) AS graduated_on,
         MAX(lapses) AS lapses, group_concat(direction) AS dirs
@@ -412,6 +420,7 @@ async function listItems(c) {
     let state = 'learning';
     if (it.status === 'suspended') state = 'suspended';
     else if (a.n && a.grad === a.n) state = 'graduated';
+    else if (a.n && a.known === a.n) state = 'known';
     else if (a.n && a.fresh === a.n) state = 'new';
     const dirs = String(a.dirs || '').split(',').filter(Boolean).sort((x, y) => ['write', 'read', 'single'].indexOf(x) - ['write', 'read', 'single'].indexOf(y));
     it.stats = {
@@ -431,7 +440,7 @@ async function itemHistory(c, role, itemId) {
   return results;
 }
 
-const EDITABLE = ['subject', 'unit', 'sentence', 'answer', 'reading', 'prompt_form', 'explanation', 'source', 'qno', 'source_date', 'reason', 'origin'];
+const EDITABLE = ['subject', 'unit', 'sentence', 'answer', 'reading', 'prompt_form', 'explanation', 'source', 'qno', 'source_date', 'reason', 'origin', 'pool'];
 
 async function updateItem(c, role, itemId, fields) {
   fields = fields || {};
@@ -441,8 +450,8 @@ async function updateItem(c, role, itemId, fields) {
   for (const k of EDITABLE) if (Object.prototype.hasOwnProperty.call(fields, k)) merged[k] = fields[k];
   const n = normalizeItem(merged);
   if (n.error) throw new Error(n.error);
-  await c.db.prepare(`UPDATE items SET ${EDITABLE.map((k) => k + ' = ?').join(', ')} WHERE item_id = ?`)
-    .bind(...EDITABLE.map((k) => n.item[k]), it.item_id).run();
+  await c.db.prepare(`UPDATE items SET ${EDITABLE.map((k) => k + ' = ?').join(', ')}, registered_pool = ? WHERE item_id = ?`)
+    .bind(...EDITABLE.map((k) => n.item[k]), n.item.pool !== it.pool ? n.item.pool : it.registered_pool, it.item_id).run();
   return { ok: true };
 }
 
@@ -460,7 +469,8 @@ async function getOverview(c) {
   const [daysRes, countsRes, dueRes, strugRes] = await c.db.batch([
     c.db.prepare('SELECT study_day, completed, cards_done, seconds, freeze_used FROM days'),
     c.db.prepare(`SELECT COUNT(DISTINCT i.item_id) AS items, COUNT(c.card_id) AS cards,
-        SUM(c.state IN ('spot', 'retired')) AS graduated, SUM(c.state = 'new') AS fresh
+        SUM(c.state IN ('spot', 'retired')) AS graduated, SUM(c.state = 'new' AND i.pool = 'mistake') AS fresh,
+        SUM(c.state = 'new' AND i.pool = 'new') AS challenge, SUM(c.state = 'known') AS known
       FROM items i LEFT JOIN cards c ON c.item_id = i.item_id WHERE i.status = 'active'`),
     c.db.prepare(`SELECT CASE WHEN c.due < ?1 THEN ?1 ELSE c.due END AS day, COUNT(*) AS n
       FROM cards c JOIN items i ON i.item_id = c.item_id
@@ -480,6 +490,7 @@ async function getOverview(c) {
     today, streak: s.streak, freezesLeft: s.freezesLeft,
     todayDone: !!todayRow.completed, todayCards: todayRow.cards_done || 0, todaySeconds: todayRow.seconds || 0,
     items: cnt.items || 0, cards: cnt.cards || 0, graduated: cnt.graduated || 0, fresh: cnt.fresh || 0,
+    challenge: cnt.challenge || 0, known: cnt.known || 0,
     forecast, struggling: strugRes.results,
     photos: { count: photoRes.results[0].n, bytes: (photoRes.meta && photoRes.meta.size_after) || 0, limit: 500 * 1000 * 1000 }
   };
@@ -505,14 +516,16 @@ async function exportTable(c, role, name, offset) {
 async function rebuildCards(c, cardIds) {
   if (!cardIds.length) return 0;
   const { results } = await c.db.prepare(
-    'SELECT review_id, card_id, result, study_day, answered_at FROM reviews WHERE card_id IN (SELECT value FROM json_each(?)) ORDER BY answered_at, review_id')
+    'SELECT review_id, card_id, result, study_day, answered_at, mode FROM reviews WHERE card_id IN (SELECT value FROM json_each(?)) ORDER BY answered_at, review_id')
     .bind(JSON.stringify(cardIds)).all();
   const byCard = {};
   for (const id of cardIds) byCard[id] = [];
   for (const r of results) byCard[r.card_id].push(r);
   const cards = [], stageRows = [];
+  const mistakeItems = new Set();
   for (const id of cardIds) {
-    const { card, stages } = replay(byCard[id]);
+    const { card, stages, toMistake } = replay(byCard[id]);
+    if (toMistake) mistakeItems.add(id);
     cards.push({ card_id: id, ...card });
     for (const [rid, [before, after]] of Object.entries(stages)) stageRows.push({ review_id: rid, stage_before: before, stage_after: after });
   }
@@ -526,6 +539,11 @@ async function rebuildCards(c, cardIds) {
         json_extract(value, '$.stage_after') AS stage_after FROM json_each(?)) AS j
       WHERE reviews.review_id = j.review_id`).bind(JSON.stringify(stageRows)));
   }
+  stmts.push(c.db.prepare(`UPDATE items SET pool = CASE WHEN EXISTS (
+      SELECT 1 FROM cards c2 WHERE c2.item_id = items.item_id AND c2.card_id IN (SELECT value FROM json_each(?2))
+    ) THEN 'mistake' ELSE registered_pool END
+    WHERE item_id IN (SELECT item_id FROM cards WHERE card_id IN (SELECT value FROM json_each(?1)))`)
+    .bind(JSON.stringify(cardIds), JSON.stringify([...mistakeItems])));
   await c.db.batch(stmts);
   return cards.length;
 }
@@ -566,3 +584,25 @@ async function resetDay(c, role, day) {
   await rebuildCards(c, ids);
   return { deleted: delRev.meta.changes, cards: ids.length };
 }
+
+// ───────── 新しい問題のチャレンジ ─────────
+// 登録先が「新しい問題」で、まだ解いていないカードを種類（単元）ごとに出す。10分の枠や連続日数とは別
+
+async function getChallengeDecks(c) {
+  const { results } = await c.db.prepare(
+    `SELECT COALESCE(NULLIF(i.unit, ''), i.subject, 'その他') AS deck, COUNT(*) AS n FROM cards c JOIN items i ON i.item_id = c.item_id
+     WHERE i.status = 'active' AND i.pool = 'new' AND c.state = 'new' GROUP BY 1 ORDER BY MIN(i.created_at)`).all();
+  return results;
+}
+
+async function getChallenge(c, role, deck, limit) {
+  const n = Math.max(1, Math.min(50, Math.floor(Number(limit) || 10)));
+  const { results } = await c.db.prepare(
+    `SELECT c.card_id, c.direction, c.stage, c.state, ${ITEM_VIEW} FROM cards c JOIN items i ON i.item_id = c.item_id
+     WHERE i.status = 'active' AND i.pool = 'new' AND c.state = 'new' AND COALESCE(NULLIF(i.unit, ''), i.subject, 'その他') = ?
+     ORDER BY i.created_at, i.item_id, CASE c.direction WHEN 'write' THEN 0 WHEN 'read' THEN 1 ELSE 2 END LIMIT ?`).bind(String(deck || ''), n).all();
+  const out = [];
+  for (const r of results) out.push(await withPhotoUrls(c, r));
+  return out;
+}
+

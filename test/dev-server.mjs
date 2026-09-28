@@ -40,6 +40,12 @@ if (process.argv.includes('--seed')) {
   const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
   const q = (await call('uploadPhoto', png)).id;
   await call('addItems', [{ type: 'B', subject: '算数', unit: '速さ', photo_q: q, answer: '12km', source: '模試 第3回', qno: '大問2(3)', reason: '読み違い', origin: '模試', explanation: '分→時の直し忘れ' }]);
+  await call('addItems', [
+    { type: 'A', subject: '国語', unit: '漢字1年生', sentence: '話し合いで円満に解決する', answer: '円満', reading: 'えんまん', explanation: '争いがなく、おだやかなこと', pool: 'new', origin: 'その他' },
+    { type: 'A', subject: '国語', unit: '漢字1年生', sentence: '五感を使って観察する', answer: '五感', reading: 'ごかん', explanation: '見る・聞く・かぐ・味わう・さわるの五つの感覚', pool: 'new', origin: 'その他' },
+    { type: 'A', subject: '国語', unit: '漢字1年生', sentence: '人の考え方は千差万別だ', answer: '千差万別', reading: 'せんさばんべつ', explanation: 'いろいろなちがいがあること', pool: 'new', origin: 'その他' },
+    { type: 'A', subject: '国語', unit: '作文表現', sentence: '雨（　　）、多くの人がマラソン大会に集まった。', answer: 'にもかかわらず', explanation: '意味: 〜なのに／使う場面: 予想とちがう結果になったことを書くとき', pool: 'new', origin: 'その他' }
+  ]);
   console.log('seeded');
 }
 

@@ -85,14 +85,16 @@
   var REASONS = ['知らなかった', 'うっかり', '時間切れ', '読み違い'];
   var ORIGINS = ['塾', '模試', 'その他'];
   var TYPES = [['A', 'A 暗記（一問一答）'], ['B', 'B 手順（計算・算数）'], ['C', 'C 考え方（読解・記述）']];
-  var STATES = { new: '新規', learning: '学習中', graduated: '卒業', suspended: '停止中' };
+  var STATES = { new: '未出題', learning: '学習中', graduated: '卒業', known: '覚えていた', suspended: '停止中' };
+  // 登録先: まちがえた問題（毎日の復習）/ 新しい問題（チャレンジで解き、△×ならまちがえた問題に移る）
+  var POOLS = [['mistake', 'まちがえた問題'], ['new', '新しい問題（チャレンジ用）']];
 
   var pin = KS.load(KEY_PIN) || '';
   var meta = KS.loadJson(KEY_META, {});
   var tab = 'add', sub = 'kanji';
   var items = null;       // listItems のキャッシュ
   var jobs = [];          // 写真登録の裏の処理 {label, status}
-  var filters = { subject: '', state: '', reason: '', q: '' };
+  var filters = { pool: '', subject: '', state: '', reason: '', q: '' };
 
   function saveMeta() { KS.storeJson(KEY_META, meta); }
   function call(fn) { return KS.call(fn, pin, Array.prototype.slice.call(arguments, 1)); }
@@ -183,12 +185,13 @@
 
   function commonMeta() {
     return [
+      field('登録先', sel('pool', POOLS, 'mistake')),
       h('div', { class: 'row2' }, [field('出典', txt('source', '例: 漢字テスト 第5回')), field('日付', txt('source_date', '', 'date'))]),
       h('div', { class: 'row2' }, [field('種類', sel('origin', ORIGINS)), field('間違えた理由', sel('reason', REASONS))])
     ];
   }
   function metaValues() {
-    return { source: meta.source || '', source_date: meta.source_date || '', origin: meta.origin || '塾', reason: meta.reason || '' };
+    return { source: meta.source || '', source_date: meta.source_date || '', origin: meta.origin || '塾', reason: meta.reason || '', pool: meta.pool || 'mistake' };
   }
 
   // 漢字まとめ: 1行1問「例文,答え,読み[,出題表記]」。カンマまたはタブ区切り（Excel からの貼り付け可）
@@ -249,7 +252,7 @@
       btn.disabled = true;
       call('addItems', ok.map(function (r) {
         return { type: 'A', subject: '国語', unit: '漢字', sentence: r.sentence, answer: r.answer, reading: r.reading,
-          prompt_form: r.prompt_form, explanation: r.meaning, source: m.source, source_date: m.source_date, reason: m.reason, origin: m.origin,
+          prompt_form: r.prompt_form, explanation: r.meaning, source: m.source, source_date: m.source_date, reason: m.reason, origin: m.origin, pool: m.pool,
           make_read: readChk.checked };
       })).then(function (res) {
         // 登録できなかった行と、もともとエラーだった行だけ入力欄に残す
@@ -346,7 +349,7 @@
         photoQ: q.dataUrl, photoA: a.dataUrl,
         item: { type: meta.ptype || 'B', subject: meta.subject || '算数', unit: meta.unit || '', qno: meta.qno || '',
           answer: ans.value.trim(), explanation: exp.value.trim(), source: m.source, source_date: m.source_date,
-          reason: m.reason, origin: m.origin }
+          reason: m.reason, origin: m.origin, pool: m.pool }
       };
       jobs.push(j);
       runJob(j);
@@ -376,7 +379,7 @@
       var m = metaValues();
       var it = { type: meta.mtype || 'A', subject: meta.msubject || '社会', unit: meta.unit || '', sentence: qIn.value.trim(),
         answer: aIn.value.trim(), explanation: eIn.value.trim(), source: m.source, source_date: m.source_date,
-        reason: m.reason, origin: m.origin };
+        reason: m.reason, origin: m.origin, pool: m.pool };
       btn.disabled = true;
       call('addItems', [it]).then(function (res) {
         if (res.skipped.length) throw new Error(res.skipped[0].reason);
@@ -419,6 +422,9 @@
       call('listItems').then(function (r) { items = r; if (tab === 'list') render(); }).catch(fail);
       return;
     }
+    var poolSel = h('select', { onchange: function () { filters.pool = poolSel.value; draw(); } },
+      [h('option', { value: '', text: '登録先: すべて' })].concat(POOLS.map(function (p) { return h('option', { value: p[0], text: p[0] === 'new' ? '新しい問題' : p[1] }); })));
+    poolSel.value = filters.pool;
     var subjSel = h('select', { onchange: function () { filters.subject = subjSel.value; draw(); } },
       [h('option', { value: '', text: '科目: すべて' })].concat(SUBJECTS.map(function (s) { return h('option', { value: s, text: s }); })));
     var stSel = h('select', { onchange: function () { filters.state = stSel.value; draw(); } },
@@ -428,13 +434,14 @@
     var qIn = h('input', { type: 'search', placeholder: '検索', value: filters.q, oninput: function () { filters.q = qIn.value; draw(); } });
     subjSel.value = filters.subject; stSel.value = filters.state; rsSel.value = filters.reason;
     var list = h('div', { class: 'list' });
-    body.appendChild(h('div', { class: 'filters' }, [subjSel, stSel, rsSel, qIn,
+    body.appendChild(h('div', { class: 'filters' }, [poolSel, subjSel, stSel, rsSel, qIn,
       h('button', { class: 'chip', text: '↻', title: '再読み込み', onclick: function () { items = null; render(); } })]));
     body.appendChild(list);
     function draw() {
       var q = filters.q.trim();
       var shown = items.filter(function (i) {
-        return (!filters.subject || i.subject === filters.subject) && (!filters.state || i.stats.state === filters.state) &&
+        return (!filters.pool || i.pool === filters.pool) &&
+          (!filters.subject || i.subject === filters.subject) && (!filters.state || i.stats.state === filters.state) &&
           (!filters.reason || i.reason === filters.reason) &&
           (!q || [i.sentence, i.answer, i.reading, i.source, i.qno, i.explanation].join(' ').indexOf(q) >= 0);
       });
@@ -442,9 +449,10 @@
       list.replaceChildren.apply(list, shown.map(function (i) {
         var s = i.stats;
         var md = function (d) { return d ? Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10)) : ''; };
-        var when = s.state === 'graduated' ? '卒業 ' + md(s.graduated_on) : s.state === 'suspended' ? '停止中' : s.state === 'new' ? '未出題' : '次回 ' + md(s.next);
+        var when = s.state === 'graduated' ? '卒業 ' + md(s.graduated_on) : s.state === 'suspended' ? '停止中' : s.state === 'known' ? 'チャレンジで○'
+          : s.state === 'new' ? (i.pool === 'new' ? 'チャレンジ待ち' : '未出題') : '次回 ' + md(s.next);
         var dirs = s.directions.map(function (d) { return d === 'write' ? '書き' : d === 'read' ? '読み' : ''; }).filter(Boolean).join('+');
-        var metaLine = [dirs || i.subject, when, s.reps + '回', s.correct === null ? '' : '正答' + s.correct + '%'].filter(Boolean).join('・');
+        var metaLine = [i.pool === 'new' ? '新しい問題' : '', dirs || i.subject, when, s.reps + '回', s.correct === null ? '' : '正答' + s.correct + '%'].filter(Boolean).join('・');
         return h('div', { class: 'item', onclick: function () { openDetail(i); } }, [
           h('div', { class: 'q' }, label(i)), stageEl(s), h('div', { class: 'meta', text: metaLine }), dots(s.last5)
         ]);
@@ -469,6 +477,8 @@
     });
     var subjSel = h('select', { class: 'input' }, SUBJECTS.map(function (s) { return h('option', { value: s, text: s }); }));
     subjSel.value = i.subject;
+    var poolSel = h('select', { class: 'input' }, POOLS.map(function (p) { return h('option', { value: p[0], text: p[1] }); }));
+    poolSel.value = i.pool || 'mistake';
     var rsSel = h('select', { class: 'input' }, [h('option', { value: '', text: '（なし）' })].concat(REASONS.map(function (s) { return h('option', { value: s, text: s }); })));
     rsSel.value = i.reason;
     var photos = h('div', { class: 'photos' });
@@ -500,7 +510,7 @@
 
     function done(msg) { dlg.close(); dlg.remove(); items = null; KS.toast(msg); render(); }
     var save = h('button', { class: 'btn', text: '保存', onclick: function () {
-      var f = { subject: subjSel.value, reason: rsSel.value };
+      var f = { subject: subjSel.value, reason: rsSel.value, pool: poolSel.value };
       Object.keys(inputs).forEach(function (k) { f[k] = inputs[k].value.trim(); });
       save.disabled = true;
       call('updateItem', i.item_id, f).then(function () { done('保存しました'); }, function (e) { save.disabled = false; fail(e); });
@@ -519,6 +529,7 @@
     dlg.appendChild(h('div', { class: 'form' }, [
       h('div', { class: 'q', style: 'font-size:17px' }, label(i)),
       photos,
+      field('登録先', poolSel),
       h('div', { class: 'row2' }, [field('科目', subjSel), field('間違えた理由', rsSel)])
     ].concat(formEls, [
       h('div', { class: 'actions' }, [save, pause, del]),
@@ -543,7 +554,7 @@
           h('div', { class: 'kpi' }, [h('b', { text: '🔥 ' + o.streak + '日' }), h('span', { text: '連続（チケット残り' + o.freezesLeft + '）' })]),
           h('div', { class: 'kpi' }, [h('b', { text: o.todayDone ? '済み' : 'まだ' }),
             h('span', { text: o.todayDone ? '今日の分（' + o.todayCards + '問・' + mins + '分' + secs + '秒）' : '今日の分' })]),
-          h('div', { class: 'kpi' }, [h('b', { text: o.items }), h('span', { text: '登録した問題（未出題のカード ' + o.fresh + '）' })]),
+          h('div', { class: 'kpi' }, [h('b', { text: o.items }), h('span', { text: '登録した問題（未出題のカード ' + o.fresh + '・チャレンジ待ち ' + o.challenge + '・チャレンジで○ ' + o.known + '）' })]),
           h('div', { class: 'kpi' }, [h('b', { text: o.graduated }), h('span', { text: '卒業したカード（全 ' + o.cards + '）' })])
         ]),
         h('div', { class: 'sec', text: '今後7日の出題予定（今日の分には期限切れを含む。新しいカードは含まない）' }),

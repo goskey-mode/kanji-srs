@@ -40,22 +40,38 @@ export function schedule(state, stage, result, day) {
 
 const RESULT_CODE = { '○': 'o', '△': 't', '×': 'x' };
 
+// 1回の解答でカードの状態を進める。mode: 'daily'（毎日の復習）/ 'new'（新しい問題のチャレンジ）
+// チャレンジで初めて解いた新しいカードは、○ → known（覚えていた。もう出さない）、△・× → まちがえた問題として翌日から復習（toMistake）
+// 戻り値: { state, stage, due, lapse, introduced_on, toMistake } / 解けないカード（known・retired）は null
+export function answer(card, code, day, mode) {
+  if (card.state === 'known' || card.state === 'retired') return null;
+  if (card.state === 'new' && mode === 'new') {
+    if (code === 'o') return { state: 'known', stage: 0, due: '', lapse: false, introduced_on: '', toMistake: false };
+    return { state: 'learning', stage: 0, due: addDays(day, 1), lapse: true, introduced_on: day, toMistake: true };
+  }
+  // まだ出していなかったカードを毎日の復習（「つづき」など）で解いたら、ここで出し始めたことにする
+  const fresh = card.state === 'new';
+  const n = schedule(fresh ? 'learning' : card.state, fresh ? 0 : card.stage, code, day);
+  return { ...n, lapse: !!n.lapse, introduced_on: fresh ? day : card.introduced_on, toMistake: false };
+}
+
 // 残っている解答の記録を古い順にたどり直して、カードの状態を作り直す（記録を消したとき用）。
-// reviews: [{review_id, result: '○'|'△'|'×', study_day, answered_at}]（古い順）
-// 戻り値: { card: {state, stage, due, reps, lapses, last_result, last_reviewed_at, introduced_on}, stages: {review_id: [before, after]} }
+// reviews: [{review_id, result: '○'|'△'|'×', study_day, answered_at, mode}]（古い順）
+// 戻り値: { card, stages: {review_id: [before, after]}, toMistake: チャレンジで間違えた記録が残っているか }
 export function replay(reviews) {
   const card = { state: 'new', stage: 0, due: '', reps: 0, lapses: 0, last_result: '', last_reviewed_at: '', introduced_on: '' };
   const stages = {};
+  let toMistake = false;
   for (const r of reviews) {
-    if (card.state === 'new') Object.assign(card, { state: 'learning', stage: 0, introduced_on: r.study_day });
-    if (card.state === 'retired') break;
     const before = card.stage;
-    const n = schedule(card.state, card.stage, RESULT_CODE[r.result], r.study_day);
+    const n = answer(card, RESULT_CODE[r.result], r.study_day, r.mode || 'daily');
+    if (!n) continue;
     Object.assign(card, { state: n.state, stage: n.stage, due: n.due, reps: card.reps + 1, lapses: card.lapses + (n.lapse ? 1 : 0),
-      last_result: r.result, last_reviewed_at: r.answered_at });
+      last_result: r.result, last_reviewed_at: r.answered_at, introduced_on: n.introduced_on });
+    if (n.toMistake) toMistake = true;
     stages[r.review_id] = [before, n.stage];
   }
-  return { card, stages };
+  return { card, stages, toMistake };
 }
 
 export function cost(direction, hasPhoto, st) {
@@ -107,7 +123,7 @@ export function streak(dayRows, today, st) {
 const HIRAGANA = /^[ぁ-ゟー]+$/;
 const KANA = /^[ぁ-ゟァ-ヿー]+$/;
 export const ITEM_FIELDS = ['type', 'subject', 'unit', 'sentence', 'answer', 'reading', 'prompt_form', 'explanation',
-  'photo_q', 'photo_a', 'source', 'qno', 'source_date', 'reason', 'origin'];
+  'photo_q', 'photo_a', 'source', 'qno', 'source_date', 'reason', 'origin', 'pool'];
 
 // 登録・修正の入力を整えて検証する。戻り値 { item, kanji } または { error }
 export function normalizeItem(x) {
@@ -118,6 +134,8 @@ export function normalizeItem(x) {
     it[k] = String(v === undefined || v === null ? '' : v).trim().slice(0, MAX_TEXT);
   }
   if (!it.origin) it.origin = 'その他';
+  if (!it.pool) it.pool = 'mistake';
+  if (!['mistake', 'new'].includes(it.pool)) return { error: '登録先が不正です' };
   if (!['A', 'B', 'C'].includes(it.type)) return { error: '型が不正です' };
   if ((it.photo_q && !/^[\w-]+$/.test(it.photo_q)) || (it.photo_a && !/^[\w-]+$/.test(it.photo_a))) return { error: '写真IDが不正です' };
   if (it.source_date && !/^\d{4}-\d{2}-\d{2}$/.test(it.source_date)) return { error: '日付は YYYY-MM-DD で入力してください' };

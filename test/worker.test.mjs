@@ -132,8 +132,8 @@ test('submitReviews: 再送は無視・午前3時前は前日扱い・不正な�
   await t.api('addItems', A, [kanji('大学の講義を受ける', '講義', 'こうぎ')]);
   const card = (await t.api('getToday', S)).cards[0];
   const r = rv(card.card_id, 'o', '2026-10-01T10:05:00+09:00');
-  assert.deepEqual(await t.api('submitReviews', S, [r]), { applied: 1, duplicates: 0, skipped: 0 });
-  assert.deepEqual(await t.api('submitReviews', S, [r]), { applied: 0, duplicates: 1, skipped: 0 });
+  assert.deepEqual(await t.api('submitReviews', S, [r]), { applied: 1, duplicates: 0, skipped: 0, toMistake: 0 });
+  assert.deepEqual(await t.api('submitReviews', S, [r]), { applied: 0, duplicates: 1, skipped: 0, toMistake: 0 });
   assert.deepEqual(t.q('SELECT stage, due FROM cards')[0], { stage: 1, due: '2026-10-02' });
   t.setNow('2026-10-03T02:30:00+09:00');
   await t.api('submitReviews', S, [rv(card.card_id, 'o', '2026-10-03T02:20:00+09:00')]);
@@ -401,4 +401,62 @@ test('今日の記録を消すと、今日の問題としてもう一度出る',
   assert.equal(again.done, false);
   assert.deepEqual(again.cards.map((x) => x.card_id), [c.card_id]);
   assert.equal(again.streak, 0);
+});
+
+
+function rvn(card_id, result, at) { return { ...rv(card_id, result, at), mode: 'new' }; }
+
+test('新しい問題: 毎日の復習には出ず、チャレンジで○は覚えていた・△×はまちがえた問題へ', async () => {
+  const t = setup();
+  await t.api('addItems', A, [
+    kanji('大学の講義を受ける', '講義', 'こうぎ'),                                   // まちがえた問題（既定）
+    kanji('話し合いで円満に解決する', '円満', 'えんまん', { pool: 'new', unit: '漢字1年生' }),
+    kanji('五感を使って観察する', '五感', 'ごかん', { pool: 'new', unit: '漢字1年生' }),
+    kanji('人の考え方は千差万別だ', '千差万別', 'せんさばんべつ', { pool: 'new', unit: '漢字1年生' }),
+    { type: 'A', subject: '国語', unit: '作文表現', sentence: '雨（　　）、人が集まった。', answer: 'にもかかわらず', pool: 'new' }
+  ]);
+  await assert.rejects(t.api('addItems', A, [kanji('例の漢字', '漢字', 'かんじ', { pool: 'x' })]).then((r) => { if (r.skipped.length) throw new Error(r.skipped[0].reason); }), /登録先/);
+  // 毎日の復習は「まちがえた問題」だけ
+  const today = await t.api('getToday', S);
+  assert.deepEqual(today.cards.map((c) => c.answer), ['講義']);
+  // チャレンジは種類ごと
+  assert.deepEqual(await t.api('getChallengeDecks', S), [{ deck: '漢字1年生', n: 3 }, { deck: '作文表現', n: 1 }]);
+  const ch = await t.api('getChallenge', S, '漢字1年生', 10);
+  assert.deepEqual(ch.map((c) => c.answer), ['円満', '五感', '千差万別']);
+  const r = await t.api('submitReviews', S, [rvn(ch[0].card_id, 'o', '2026-10-01T10:00:00+09:00'), rvn(ch[1].card_id, 't', '2026-10-01T10:01:00+09:00'), rvn(ch[2].card_id, 'x', '2026-10-01T10:02:00+09:00')]);
+  assert.equal(r.applied, 3);
+  assert.equal(r.toMistake, 2);
+  const list = await t.api('listItems', A);
+  const by = (a) => list.find((i) => i.answer === a);
+  assert.equal(by('円満').pool, 'new');
+  assert.equal(by('円満').stats.state, 'known');
+  assert.equal(by('五感').pool, 'mistake');
+  assert.equal(by('千差万別').pool, 'mistake');
+  assert.deepEqual(await t.api('getChallengeDecks', S), [{ deck: '作文表現', n: 1 }]); // ○の円満はもう出ない
+  // チャレンジの分は今日の10分の枠・今日の新しいカード数・「もう一回」に数えない
+  assert.equal((await t.api('getToday', S)).cards.length, 1);
+  // 翌日、チャレンジで間違えた2問が「まちがえた問題」として復習に出る
+  t.setNow('2026-10-02T10:00:00+09:00');
+  const next = await t.api('getToday', S);
+  assert.deepEqual(next.cards.map((c) => c.answer).sort(), ['五感', '千差万別', '講義'].sort());
+  // 記録を消すと、登録したときの登録先（新しい問題）に戻る
+  await t.api('resetItem', A, by('五感').item_id);
+  assert.equal((await t.api('listItems', A)).find((i) => i.answer === '五感').pool, 'new');
+  assert.deepEqual((await t.api('getChallengeDecks', S))[0], { deck: '漢字1年生', n: 1 });
+  // 親が登録先を変えたら、それが登録したときの登録先になる
+  await t.api('updateItem', A, by('円満').item_id, { pool: 'mistake' });
+  await t.api('resetItem', A, by('円満').item_id);
+  assert.equal((await t.api('listItems', A)).find((i) => i.answer === '円満').pool, 'mistake');
+  const o = await t.api('getOverview', A);
+  assert.equal(o.challenge, 2); // 五感・作文表現
+});
+
+test('チャレンジでも「つづき」の新しいカード数の枠は減らない', async () => {
+  const t = setup();
+  const mistakes = [];
+  for (let i = 0; i < 6; i++) mistakes.push(kanji('例' + i + 'の漢字', '漢字', 'かんじ'));
+  await t.api('addItems', A, mistakes.concat([kanji('新しい講義', '講義', 'こうぎ', { pool: 'new' })]));
+  const ch = await t.api('getChallenge', S, '国語', 10);
+  await t.api('submitReviews', S, [rvn(ch[0].card_id, 'x', '2026-10-01T09:00:00+09:00')]);
+  assert.equal((await t.api('getToday', S)).cards.length, 4); // チャレンジで入った1枚は数えない
 });
