@@ -553,25 +553,38 @@ async function getOverview(c) {
 }
 
 // ───────── 漢字図鑑 ─────────
-// 字ごとの状態: n = まだ / k = 知ってた（チャレンジで○）/ l = 練習中（段階つき）/ g = 卒業
-// 1字＝1語（その字を学ぶ問題）。語のカード（書き・読み）のうち、練習中が1枚でもあれば練習中、なければ卒業、知ってたの順
+// 1字＝熟語（item_id。多くは音読み）＋訓読みの語（kun_item_id。訓読みの無い字は無し）
+// 語ごとの状態: n = まだ / k = 知ってた（チャレンジで○）/ l = 練習中 / g = 卒業。書き・読みのカードのうち、練習中が1枚でもあれば練習中、なければ卒業、知ってたの順
+// マス全体（熟語・訓読みの両方で判定）: どれかが練習中 → l / 全部が知ってた・卒業 → 卒業が1つでもあれば g、なければ k / 一部だけ終えた → p（途中）/ それ以外 → n
 const BADGES_GRAD = [10, 50, 100, 300];
 const BADGES_STREAK = [7, 30, 100];
+const wordState = (l, g, k) => (l ? 'l' : g ? 'g' : k ? 'k' : 'n');
+function cellState(words) {
+  if (words.includes('l')) return 'l';
+  const done = words.filter((w) => w === 'k' || w === 'g').length;
+  if (done === words.length) return words.includes('g') ? 'g' : 'k';
+  return done ? 'p' : 'n';
+}
 async function getZukan(c) {
   const st = await settings(c);
   const today = studyDay(c.now, st.day_start_hour);
+  const agg = (col, cond) => `COALESCE(SUM(c.item_id = k.${col} AND ${cond}), 0)`;
   const [rows, daysRes] = await c.db.batch([
-    c.db.prepare(`SELECT k.char, k.grade, SUM(c.state = 'learning') AS l, MIN(CASE WHEN c.state = 'learning' THEN c.stage END) AS stage,
-        SUM(c.state IN ('spot', 'retired')) AS g, SUM(c.state = 'known') AS k
-      FROM kanji k LEFT JOIN items i ON i.item_id = k.item_id AND i.status = 'active' LEFT JOIN cards c ON c.item_id = i.item_id
+    c.db.prepare(`SELECT k.char, k.grade, k.kun_item_id <> '' AS has_kun,
+        ${agg('item_id', "c.state = 'learning'")} AS ol, ${agg('item_id', "c.state IN ('spot', 'retired')")} AS og, ${agg('item_id', "c.state = 'known'")} AS ok,
+        ${agg('kun_item_id', "c.state = 'learning'")} AS kl, ${agg('kun_item_id', "c.state IN ('spot', 'retired')")} AS kg, ${agg('kun_item_id', "c.state = 'known'")} AS kk,
+        MIN(CASE WHEN c.state = 'learning' THEN c.stage END) AS stage
+      FROM kanji k LEFT JOIN items i ON i.item_id IN (k.item_id, k.kun_item_id) AND i.status = 'active' LEFT JOIN cards c ON c.item_id = i.item_id
       GROUP BY k.char ORDER BY k.grade, k.ord`),
     c.db.prepare('SELECT study_day, completed, freeze_used FROM days')
   ]);
-  const count = { n: 0, k: 0, l: 0, g: 0 };
+  const count = { n: 0, p: 0, k: 0, l: 0, g: 0 };
   const chars = rows.results.map((r) => {
-    const s = r.l ? 'l' : r.g ? 'g' : r.k ? 'k' : 'n';
+    const on = wordState(r.ol, r.og, r.ok);
+    const kun = r.has_kun ? wordState(r.kl, r.kg, r.kk) : '';
+    const s = cellState(kun ? [on, kun] : [on]);
     count[s]++;
-    return [r.char, r.grade, s, r.l ? r.stage : 0];
+    return [r.char, r.grade, s, s === 'l' ? r.stage || 0 : 0, on, kun];
   });
   const cur = streak(daysRes.results, today, st).streak;
   const best = Math.max(cur, bestStreak(daysRes.results));
@@ -582,16 +595,25 @@ async function getZukan(c) {
   };
 }
 
-// 図鑑でマスを押したとき: その字の語・例文・意味と、カードの状態
+// 図鑑でマスを押したとき: その字の熟語・訓読みの語（例文・意味）と、カードの状態
 async function getKanjiInfo(c, role, ch) {
   if (typeof ch !== 'string' || !ch || ch.length > 2) throw new Error('BAD_ARGS');
-  const k = await c.db.prepare(`SELECT k.char, k.grade, i.item_id, i.sentence, i.answer, i.reading, i.prompt_form, i.explanation, i.pool
-    FROM kanji k LEFT JOIN items i ON i.item_id = k.item_id AND i.status = 'active' WHERE k.char = ?`).bind(ch).first();
+  const k = await c.db.prepare('SELECT char, grade, item_id, kun_item_id FROM kanji WHERE char = ?').bind(ch).first();
   if (!k) throw new Error('NOT_FOUND');
-  const cards = k.item_id
-    ? (await c.db.prepare('SELECT direction, state, stage, due, reps, last_result FROM cards WHERE item_id = ? ORDER BY direction DESC').bind(k.item_id).all()).results
-    : [];
-  return { ...k, cards };
+  const ids = [['on', k.item_id], ['kun', k.kun_item_id]].filter((x) => x[1]);
+  const [itemsRes, cardsRes] = ids.length
+    ? await c.db.batch([
+      c.db.prepare(`SELECT item_id, sentence, answer, reading, prompt_form, explanation, pool FROM items
+        WHERE status = 'active' AND item_id IN (SELECT value FROM json_each(?))`).bind(JSON.stringify(ids.map((x) => x[1]))),
+      c.db.prepare(`SELECT item_id, direction, state, stage, due, reps, last_result FROM cards
+        WHERE item_id IN (SELECT value FROM json_each(?)) ORDER BY direction DESC`).bind(JSON.stringify(ids.map((x) => x[1])))
+    ])
+    : [{ results: [] }, { results: [] }];
+  const words = ids.map(([kind, id]) => {
+    const it = itemsRes.results.find((r) => r.item_id === id);
+    return it ? { kind, ...it, cards: cardsRes.results.filter((r) => r.item_id === id) } : { kind, item_id: null, cards: [] };
+  });
+  return { char: k.char, grade: k.grade, words };
 }
 
 // ───────── ダッシュボード（親） ─────────

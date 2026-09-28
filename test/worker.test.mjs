@@ -530,9 +530,9 @@ test('一覧は登録先・単元で絞って返す／単元の一覧と重複�
 // ───── 漢字図鑑・ダッシュボード ─────
 
 function linkKanji(t, rows) {
-  for (const [ch, grade, ord, answer] of rows) {
-    const it = answer ? t.q('SELECT item_id FROM items WHERE answer = ?', answer)[0] : null;
-    t.env.DB.raw.prepare('INSERT INTO kanji (char, grade, ord, item_id) VALUES (?, ?, ?, ?)').run(ch, grade, ord, it ? it.item_id : '');
+  const id = (answer) => { const it = answer ? t.q('SELECT item_id FROM items WHERE answer = ?', answer)[0] : null; return it ? it.item_id : ''; };
+  for (const [ch, grade, ord, answer, kun] of rows) {
+    t.env.DB.raw.prepare('INSERT INTO kanji (char, grade, ord, item_id, kun_item_id) VALUES (?, ?, ?, ?, ?)').run(ch, grade, ord, id(answer), id(kun));
   }
 }
 
@@ -544,35 +544,41 @@ test('logic: 最長の連続日数（お休みチケットの日はつなぐが�
   ]), 3);
 });
 
-test('図鑑: 字ごとに まだ／知ってた／練習中／卒業 を返し、マスを押すと語と状態が見られる', async () => {
+test('図鑑: 字ごとに音・訓の語の状態をまとめ（まだ／途中／知ってた／練習中／卒業）、マスを押すと両方の語が見られる', async () => {
   const t = setup();
   const N = { pool: 'new', unit: '漢字1年生' };
+  const K = { pool: 'new', unit: '訓読み1年生', prompt_form: 'ヒトつ' };
   await t.api('addItems', A, [kanji('一日中雨がふる', '一日', 'いちにち', N), kanji('右手をあげる', '右手', 'みぎて', N),
-    kanji('雨天のため中止', '雨天', 'うてん', N), kanji('音楽を聞く', '音楽', 'おんがく', N)]);
-  linkKanji(t, [['一', 1, 0, '一日'], ['右', 1, 1, '右手'], ['雨', 1, 2, '雨天'], ['円', 1, 3, ''], ['音', 1, 5, '音楽'], ['引', 2, 0, '']]);
-  const ch = await t.api('getChallenge', S, '漢字1年生', 10, 'mix');
+    kanji('雨天のため中止', '雨天', 'うてん', N), kanji('音楽を聞く', '音楽', 'おんがく', N), kanji('りんごを一つ食べる', '一つ', 'ひとつ', K)]);
+  linkKanji(t, [['一', 1, 0, '一日', '一つ'], ['右', 1, 1, '右手'], ['雨', 1, 2, '雨天'], ['円', 1, 3, ''], ['音', 1, 5, '音楽'], ['引', 2, 0, '']]);
   const card = (a, d) => t.q('SELECT c.card_id FROM cards c JOIN items i ON i.item_id = c.item_id WHERE i.answer = ? AND c.direction = ?', a, d)[0].card_id;
-  assert.ok(ch.length);
   await t.api('submitReviews', S, [rvn(card('一日', 'write'), 'o', '2026-10-01T10:00:00+09:00'), rvn(card('一日', 'read'), 'o', '2026-10-01T10:01:00+09:00'),
     rvn(card('右手', 'write'), 'x', '2026-10-01T10:02:00+09:00')]);
   t.env.DB.raw.prepare("UPDATE cards SET state = 'spot', stage = 6 WHERE item_id = (SELECT item_id FROM items WHERE answer = '音楽')").run();
   const z = await t.api('getZukan', S);
-  assert.deepEqual(z.chars, [['一', 1, 'k', 0], ['右', 1, 'l', 0], ['雨', 1, 'n', 0], ['円', 1, 'n', 0], ['音', 1, 'g', 0], ['引', 2, 'n', 0]]);
-  assert.deepEqual(z.count, { n: 3, k: 1, l: 1, g: 1 });
+  // [字, 学年, マスの状態, 段階, 音の語, 訓の語（無い字は ''）]
+  assert.deepEqual(z.chars, [['一', 1, 'p', 0, 'k', 'n'], ['右', 1, 'l', 0, 'l', ''], ['雨', 1, 'n', 0, 'n', ''], ['円', 1, 'n', 0, 'n', ''],
+    ['音', 1, 'g', 0, 'g', ''], ['引', 2, 'n', 0, 'n', '']]);
+  assert.deepEqual(z.count, { n: 3, p: 1, k: 0, l: 1, g: 1 });
   assert.equal(z.total, 6);
   assert.deepEqual(z.badges.map((b) => b.kind + b.n + ':' + b.got), ['grad10:false', 'grad50:false', 'grad100:false', 'grad300:false', 'streak7:false', 'streak30:false', 'streak100:false']);
-  const info = await t.api('getKanjiInfo', S, '右');
-  assert.equal(info.answer, '右手');
-  assert.equal(info.pool, 'mistake');
-  assert.deepEqual(info.cards.map((c) => c.direction + ':' + c.state), ['write:learning', 'read:new']);
+  // 訓の語もチャレンジで○ → 両方終えて「知ってた」
+  await t.api('submitReviews', S, [rvn(card('一つ', 'write'), 'o', '2026-10-01T10:03:00+09:00'), rvn(card('一つ', 'read'), 'o', '2026-10-01T10:04:00+09:00')]);
+  assert.deepEqual((await t.api('getZukan', S)).chars[0], ['一', 1, 'k', 0, 'k', 'k']);
+  const info = await t.api('getKanjiInfo', S, '一');
+  assert.deepEqual(info.words.map((w) => w.kind + ':' + w.answer + ':' + w.cards.map((c) => c.direction + '=' + c.state).join(',')),
+    ['on:一日:write=known,read=known', 'kun:一つ:write=known,read=known']);
+  const right = await t.api('getKanjiInfo', S, '右');
+  assert.equal(right.words.length, 1);
+  assert.equal(right.words[0].pool, 'mistake');
   const none = await t.api('getKanjiInfo', S, '円');
-  assert.equal(none.item_id, null);
-  assert.deepEqual(none.cards, []);
+  assert.deepEqual(none.words, []);
   await assert.rejects(t.api('getKanjiInfo', S, '犬'), /NOT_FOUND/);
   await assert.rejects(t.api('getKanjiInfo', S, ''), /BAD_ARGS/);
   // 問題を削除したら「まだ」に戻る
-  await t.api('setStatus', A, info.item_id, 'deleted');
+  await t.api('setStatus', A, right.words[0].item_id, 'deleted');
   assert.equal((await t.api('getZukan', S)).chars[1][2], 'n');
+  assert.deepEqual((await t.api('getKanjiInfo', S, '右')).words, [{ kind: 'on', item_id: null, cards: [] }]);
 });
 
 test('定着率のスナップショット: その日最初の読み込みで1行だけ残し、日ごとの記録削除で取り直す', async () => {
